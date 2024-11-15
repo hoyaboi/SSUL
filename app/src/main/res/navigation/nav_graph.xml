@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:startDestination="@id/selectCollegeFragment">
+
+    <fragment
+        android:id="@+id/selectCollegeFragment"
+        android:name="com.example.ssul.SelectCollegeFragment"
+        android:label="Select College">
+        <action
+            android:id="@+id/action_selectCollegeFragment_to_selectDepartmentFragment"
+            app:destination="@id/selectDepartmentFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/selectDepartmentFragment"
+        android:name="com.example.ssul.SelectDepartmentFragment"
+        android:label="Select Department">
+        <action
+            android:id="@+id/action_selectDepartmentFragment_to_welcomeFragment"
+            app:destination="@id/welcomeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/welcomeFragment"
+        android:name="com.example.ssul.WelcomeFragment"
+        android:label="Welcome" />
+</navigation>
