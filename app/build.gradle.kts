@@ -48,4 +48,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     implementation("androidx.viewpager2:viewpager2:1.1.0")
+
+    implementation("com.naver.maps:map-sdk:3.19.1") // 네이버 지도 SDK
+    implementation("com.google.android.gms:play-services-location:21.0.1") // 최적 위치 정보 받아오는 것
 }
