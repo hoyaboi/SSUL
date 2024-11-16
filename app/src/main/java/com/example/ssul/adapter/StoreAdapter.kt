@@ -10,7 +10,7 @@ import com.example.ssul.R
 import com.example.ssul.StoreItem
 
 class StoreAdapter(
-    private var storeItems: List<StoreItem>,
+    private var storeItems: MutableList<StoreItem>,
     private val onFavoriteClicked: (Int) -> Unit
 ) : RecyclerView.Adapter<StoreAdapter.StoreViewHolder>() {
 
@@ -65,7 +65,7 @@ class StoreAdapter(
 
     // 필터 체크에 따른 가게 리스트 업데이트
     fun updateItems(newItems: List<StoreItem>) {
-        storeItems = newItems
+        storeItems = newItems.toMutableList()
         notifyDataSetChanged()
     }
 }

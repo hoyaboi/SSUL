@@ -49,13 +49,21 @@ class MainActivity : AppCompatActivity() {
     override fun onBackPressed() {
         if (messageBox.visibility == View.VISIBLE) {
             messageBox.visibility = View.GONE
+            return
+        }
+
+        // 홈 화면(HomeFragment)에서의 뒤로가기 클릭 처리
+        val currentFragment = (viewPager.adapter as? TabAdapter)?.getFragment(viewPager.currentItem)
+        if (currentFragment is HomeFragment && currentFragment.handleBackPressed()) {
+            return
+        }
+
+        // 기본 뒤로가기 클릭 처리 (앱 종료)
+        if (System.currentTimeMillis() - backPressedTime < 2000) {
+            super.onBackPressed()
         } else {
-            if (System.currentTimeMillis() - backPressedTime < 2000) {
-                super.onBackPressed() // 앱 종료
-            } else {
-                backPressedTime = System.currentTimeMillis()
-                Toast.makeText(this, "'뒤로' 버튼을 한 번 더 누르면 종료됩니다.", Toast.LENGTH_SHORT).show()
-            }
+            backPressedTime = System.currentTimeMillis()
+            Toast.makeText(this, "'뒤로' 버튼을 한 번 더 누르면 종료됩니다.", Toast.LENGTH_SHORT).show()
         }
     }
 

@@ -1,6 +1,7 @@
 package com.example.ssul
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.media.Image
 import android.os.Bundle
@@ -28,7 +29,7 @@ class FavoritesFragment : Fragment() {
     private lateinit var storeAdapter: StoreAdapter
     private lateinit var sharedPreferences: SharedPreferences
 
-    private val sampleStoreItems = listOf(
+    private val sampleStoreItems = mutableListOf(
         StoreItem(
             storeId = 1,
             storeImage = R.drawable.sample_store1,
@@ -94,7 +95,7 @@ class FavoritesFragment : Fragment() {
         sampleStoreItems.forEach { item ->
             item.isFavorite = sharedPreferences.getBoolean(item.storeId.toString(), false)
         }
-        val favoriteItems = sampleStoreItems.filter { it.isFavorite } // isFavorite이 true인 항목만 필터링
+        val favoriteItems = sampleStoreItems.filter { it.isFavorite }.toMutableList() // isFavorite이 true인 항목만 필터링
 
         // 어댑터 초기화 + 즐겨찾기 제거 클릭 로직
         storeAdapter = StoreAdapter(favoriteItems) { storeId ->
@@ -110,7 +111,8 @@ class FavoritesFragment : Fragment() {
         // 학과 설정 클릭 시 학과 설정 액티비티로 이동
         setDegreeButton.setOnClickListener {
             (activity as? MainActivity)?.showMessageBox("학과를 재설정 하시겠습니까?", onYesClicked = {
-                // 학과 설정 액티비티로 이동
+                val intent = Intent(requireContext(), StartActivity::class.java)
+                startActivity(intent)
             })
         }
 

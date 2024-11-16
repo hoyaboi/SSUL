@@ -9,6 +9,8 @@ import com.example.ssul.MapFragment
 
 class TabAdapter(fragmentActivity: FragmentActivity) : FragmentStateAdapter(fragmentActivity) {
 
+    private val fragmentCache = mutableMapOf<Int, Fragment>() // Fragment 캐시
+
     private val fragmentCreators: Map<Int, () -> Fragment> = mapOf(
         0 to { FavoritesFragment() },
         1 to { HomeFragment() },
@@ -16,8 +18,15 @@ class TabAdapter(fragmentActivity: FragmentActivity) : FragmentStateAdapter(frag
     )
 
     override fun createFragment(position: Int): Fragment {
-        return fragmentCreators[position]?.invoke() ?: throw IllegalStateException("Invalid position")
+        // 캐시에 저장된 Fragment가 있으면 반환, 없으면 생성 후 저장
+        return fragmentCache[position] ?: fragmentCreators[position]?.invoke()?.also {
+            fragmentCache[position] = it
+        } ?: throw IllegalStateException("Invalid position")
     }
 
     override fun getItemCount(): Int = fragmentCreators.size
+
+    fun getFragment(position: Int): Fragment? {
+        return fragmentCache[position]
+    }
 }
