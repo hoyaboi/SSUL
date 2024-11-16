@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
 
         setupViews()
         viewPager.adapter = TabAdapter(this)
+        viewPager.isUserInputEnabled = false
         viewPager.setCurrentItem(1, false) // 메인 화면 설정(홈)
 
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
