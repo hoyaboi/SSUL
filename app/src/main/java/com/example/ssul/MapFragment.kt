@@ -10,6 +10,7 @@ import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.LocationTrackingMode
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.overlay.Marker
+import com.naver.maps.map.overlay.OverlayImage
 import com.naver.maps.map.overlay.PolylineOverlay
 import com.naver.maps.map.util.FusedLocationSource
 import okhttp3.Call
@@ -83,7 +84,7 @@ class MapFragment : Fragment() {
             marker.position = LatLng(store.latitude, store.longitude)
             marker.map = naverMap
             marker.captionText = store.name
-            //marker.icon = 아이콘 이미지
+            marker.icon = OverlayImage.fromResource(R.drawable.ic_store)
             marker.setOnClickListener {
                 showRouteToStore(marker.position)
                 true

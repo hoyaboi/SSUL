@@ -4,19 +4,43 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:gravity="center"
+    android:background="@color/white"
     tools:context=".WelcomeFragment">
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="환영합니다!"
+        android:textSize="25sp"
+        android:textColor="#7165E3"
+        android:fontFamily="@font/regular_font" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id = "@+id/welcomeTextView"
-        android:text="" />
+        android:layout_marginTop = "20dp"
+        android:text=""
+        android:fontFamily="@font/regular_font"
+        android:textSize="18sp"
+        android:textColor="@color/black"
+        />
 
-    <Button
-        android:layout_width="wrap_content"
+    <ImageView
+        android:layout_width="186dp"
+        android:layout_height="177dp"
+        android:layout_marginTop="70dp"
+        android:src="@drawable/welcome_check_img"/>
+
+    <ImageButton
+        android:layout_width="match_parent"
+        android:layout_marginHorizontal="20dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="210dp"
         android:text="확인"
+        android:background="@drawable/button_background"
         android:id = "@+id/confirmButton" />
 
 

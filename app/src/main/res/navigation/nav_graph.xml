@@ -5,8 +5,7 @@
 
     <fragment
         android:id="@+id/selectCollegeFragment"
-        android:name="com.example.ssul.SelectCollegeFragment"
-        android:label="Select College">
+        android:name="com.example.ssul.SelectCollegeFragment">
         <action
             android:id="@+id/action_selectCollegeFragment_to_selectDepartmentFragment"
             app:destination="@id/selectDepartmentFragment" />
@@ -14,8 +13,7 @@
 
     <fragment
         android:id="@+id/selectDepartmentFragment"
-        android:name="com.example.ssul.SelectDepartmentFragment"
-        android:label="Select Department">
+        android:name="com.example.ssul.SelectDepartmentFragment">
         <action
             android:id="@+id/action_selectDepartmentFragment_to_welcomeFragment"
             app:destination="@id/welcomeFragment" />
@@ -23,6 +21,5 @@
 
     <fragment
         android:id="@+id/welcomeFragment"
-        android:name="com.example.ssul.WelcomeFragment"
-        android:label="Welcome" />
+        android:name="com.example.ssul.WelcomeFragment" />
 </navigation>

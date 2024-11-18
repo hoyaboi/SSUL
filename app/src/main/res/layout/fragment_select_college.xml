@@ -4,18 +4,55 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:background="@color/white"
     tools:context=".SelectCollegeFragment">
 
-    <!-- TODO: Update blank fragment layout -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center"
+        android:layout_marginBottom="240dp">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/register_stage" />
+
+
+    </LinearLayout>
+
+
+
 
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="소속 단과 대학을 골라주세요!" />
+        android:layout_marginBottom="8dp"
+        android:text="STEP 1"
+        android:textSize="16sp"
+        android:textColor="#7165E3"
+        android:fontFamily="@font/regular_font" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:gravity="center"
+        android:text="소속 단과 대학을 골라주세요!"
+        android:fontFamily="@font/regular_font"
+        android:textSize="18sp"
+        android:textColor="@color/black" />
 
     <Spinner
+        android:id="@+id/collegeSpinner"
+        android:layout_width="250dp"
         android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:id="@+id/collegeSpinner" />
+        android:background="@drawable/spinner_background"
+        android:spinnerMode="dropdown"
+        android:fontFamily="@font/regular_font"
+        android:layout_marginBottom="32dp" />
+
+
 
 </LinearLayout>

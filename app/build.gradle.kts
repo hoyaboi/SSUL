@@ -78,4 +78,6 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest) // 최적 위치 정보 받아오는 것
+    implementation("com.github.bumptech.glide:glide:4.12.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")//스플래시 화면
 }

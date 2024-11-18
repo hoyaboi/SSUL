@@ -4,17 +4,51 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:background="@color/white"
     tools:context=".SelectDepartmentFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center"
+        android:layout_marginBottom="240dp">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/register_stage2" />
+
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="소속 학과(부)를 골라주세요!" />
+        android:layout_marginBottom="8dp"
+        android:text="STEP 2"
+        android:textSize="16sp"
+        android:textColor="#7165E3"
+        android:fontFamily="@font/regular_font" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:gravity="center"
+        android:text="소속 학과(부)를 골라주세요!"
+        android:fontFamily="@font/regular_font"
+        android:textSize="18sp"
+        android:textColor="@color/black"
+        />
 
     <Spinner
+        android:layout_width="250dp"
         android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
+        android:background="@drawable/spinner_background"
+        android:spinnerMode="dropdown"
+        android:fontFamily="@font/regular_font"
+        android:layout_marginBottom="32dp"
         android:id="@+id/departmentSpinner" />
 
 </LinearLayout>
