@@ -48,7 +48,6 @@
                     android:layout_width="39dp"
                     android:layout_height="18dp"
                     android:layout_marginStart="4dp"
-                    android:layout_gravity="center_vertical"
                     android:background="@drawable/filter_partner_checked"/>
 
                 <View
@@ -61,7 +60,8 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center_vertical"
-                    android:padding="5dp"
+                    android:paddingTop="7dp"
+                    android:paddingBottom="3dp"
                     android:src="@drawable/favorite_clicked"/>
 
             </LinearLayout>
@@ -78,7 +78,7 @@
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp"
                     android:layout_gravity="center_vertical"
-                    android:src="@drawable/location_pin"/>
+                    android:src="@drawable/ic_location_pin"/>
 
                 <TextView
                     android:id="@+id/location_text"

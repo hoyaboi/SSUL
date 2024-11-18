@@ -1,9 +1,12 @@
 package com.example.ssul.adapter
 
+import android.content.Context
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ssul.R
@@ -11,10 +14,12 @@ import com.example.ssul.StoreItem
 
 class StoreAdapter(
     private var storeItems: MutableList<StoreItem>,
-    private val onFavoriteClicked: (Int) -> Unit
+    private val onFavoriteClicked: (Int) -> Unit,
+    private val onStoreClicked: (Int) -> Unit
 ) : RecyclerView.Adapter<StoreAdapter.StoreViewHolder>() {
 
     inner class StoreViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val storeContainer: LinearLayout = itemView.findViewById(R.id.store_container)
         private val storeImage: ImageView = itemView.findViewById(R.id.store_image)
         private val storeText: TextView = itemView.findViewById(R.id.store_text)
         private val favoriteButton: ImageView = itemView.findViewById(R.id.favorite_button)
@@ -34,6 +39,7 @@ class StoreAdapter(
                 if (item.isFavorite) R.drawable.favorite_clicked else R.drawable.favorite_non_clicked
             )
 
+            // 즐겨찾기 클릭 처리
             favoriteButton.setOnClickListener {
                 onFavoriteClicked(item.storeId)
             }
@@ -43,6 +49,11 @@ class StoreAdapter(
             controlVisibility(filterGroup, item.isFilterGroupChecked)
             controlVisibility(filterDate, item.isFilterDateChecked)
             controlVisibility(filterEfficiency, item.isFilterEfficiencyChecked)
+
+            // 가게 클릭 처리 -> 세부 화면으로 이동
+            storeContainer.setOnClickListener {
+                onStoreClicked(item.storeId)
+            }
         }
     }
 

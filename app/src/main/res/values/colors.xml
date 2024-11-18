@@ -3,5 +3,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
+    <color name="status_background">#F5F6FA</color>
+
     <color name="line">#E4E4E4</color>
 </resources>

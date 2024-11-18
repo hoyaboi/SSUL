@@ -90,25 +90,34 @@ class FavoritesFragment : Fragment() {
 
         setupViews(view)
 
-        // 내부 저장소에서 즐겨찾기 상태 로드
+        // 구현 사항
+        // 1. 즐겨찾기 상태 불러오기 -> isFavorite은 내부 저장소, 나머지는 서버
+        //    ** 즐겨찾기 상태는 storeId와 isFavorite 매핑하여 저장 **
+        // 2. 즐겨 찾기 제거 처리
+        // 3. 가게 클릭 시 상세 화면(StoreActivity)로 이동
+        // 3. 학과 설정 버튼 클릭 시 확과 설정 액티비티(StartActivity)로 이동
+        // 4. 필터 클릭 시 현재 불러온 데이터에서 일치하는 필터만 표시 -> 선택된 필터 색상 변경
+
+
+        // 1. 내부 저장소에서 즐겨찾기 상태 로드
         sharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
         sampleStoreItems.forEach { item ->
             item.isFavorite = sharedPreferences.getBoolean(item.storeId.toString(), false)
         }
         val favoriteItems = sampleStoreItems.filter { it.isFavorite }.toMutableList() // isFavorite이 true인 항목만 필터링
 
-        // 어댑터 초기화 + 즐겨찾기 제거 클릭 로직
-        storeAdapter = StoreAdapter(favoriteItems) { storeId ->
-            (activity as? MainActivity)?.showMessageBox(
-                message = "즐겨찾기에서 삭제하시겠습니까?",
-                onYesClicked = {
-                    toggleFavorite(storeId)
-                }
-            )
-        }
+        // 2. 어댑터 초기화 + 즐겨찾기 클릭 제거 로직
+        // 3. 가게 클릭 처리 -> 상세 화면으로 이동
+        storeAdapter = StoreAdapter(favoriteItems, { storeId ->
+            changeFavoriteStatus(storeId)
+        }, { storeId ->
+            val intent = Intent(requireContext(), StoreActivity::class.java)
+            intent.putExtra("storeId", storeId)
+            startActivity(intent)
+        })
         storeList.adapter = storeAdapter
 
-        // 학과 설정 클릭 시 학과 설정 액티비티로 이동
+        // 4. 학과 설정 클릭 시 학과 설정 액티비티로 이동
         setDegreeButton.setOnClickListener {
             (activity as? MainActivity)?.showMessageBox("학과를 재설정 하시겠습니까?", onYesClicked = {
                 val intent = Intent(requireContext(), StartActivity::class.java)
@@ -116,7 +125,7 @@ class FavoritesFragment : Fragment() {
             })
         }
 
-        // toggleFilter 함수로 필터 이름과 클릭된 뷰(it) 전달
+        // 5. toggleFilter 함수로 필터 이름과 클릭된 뷰(it) 전달
         groupFilterButton.setOnClickListener { toggleFilter("group", it as TextView) }
         dateFilterButton.setOnClickListener { toggleFilter("date", it as TextView) }
         efficiencyFilterButton.setOnClickListener { toggleFilter("efficiency", it as TextView) }
@@ -161,6 +170,16 @@ class FavoritesFragment : Fragment() {
         }
     }
 
+    // 즐겨 찾기 제거
+    private fun changeFavoriteStatus(storeId: Int) {
+        (activity as? MainActivity)?.showMessageBox(
+            message = "즐겨찾기에서 삭제하시겠습니까?",
+            onYesClicked = {
+                toggleFavorite(storeId)
+            }
+        )
+    }
+
     // 필터 선택 시 필터 UI 변경 + 선택된 필터에 해당하는 가게 정보 표시
     private fun toggleFilter(filter: String, button: TextView) {
         // 필터 UI 변경
@@ -174,7 +193,7 @@ class FavoritesFragment : Fragment() {
             button.setTextAppearance(requireContext(), R.style.filter_selected_text_style)
         }
 
-        // 필터링된 가게 표시
+        // 필터링된 가게가 없을 때
         if (activeFilters.isEmpty()) {
             val favoriteItems = sampleStoreItems.filter { item ->
                 sharedPreferences.getBoolean(item.storeId.toString(), false)
@@ -183,6 +202,7 @@ class FavoritesFragment : Fragment() {
             return
         }
 
+        // 필터링 : 가게 필터에 내가 선택한 필터 중 하나라도 일치하지 않으면 출력 X
         val filteredItems = sampleStoreItems.filter { item ->
             sharedPreferences.getBoolean(item.storeId.toString(), false) &&
                     activeFilters.all { filter ->
@@ -195,9 +215,7 @@ class FavoritesFragment : Fragment() {
                         }
                     }
         }
-
         storeAdapter.updateItems(filteredItems)
     }
-
 
 }
