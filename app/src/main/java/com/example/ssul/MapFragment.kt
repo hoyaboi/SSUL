@@ -1,5 +1,7 @@
 package com.example.ssul
 
+import android.location.Address
+import android.location.Geocoder
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -149,6 +151,22 @@ class MapFragment : Fragment() {
                 width = 10 // 선의 두께
             }
             polyline?.map = naverMap
+        }
+    }
+
+    private fun convertAddressToCoordinates(address: String) {
+        val geocoder = context?.let { Geocoder(it) }
+        try {
+            val addresses: MutableList<Address>? = geocoder?.getFromLocationName(address, 1)
+
+            if (addresses!!.isNotEmpty()) {
+                val location: Address = addresses[0]
+                val latitude = location.latitude
+                val longitude = location.longitude
+            } else {
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
     }
 }
