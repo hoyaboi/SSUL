@@ -1,7 +1,6 @@
 package com.example.ssul.adapter
 
 import android.content.Context
-import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -65,9 +64,21 @@ class StoreAdapter(
 
     override fun onBindViewHolder(holder: StoreViewHolder, position: Int) {
         holder.bind(storeItems[position])
+
+        // 마지막 아이템인 경우 아래 마진 추가
+        val layoutParams = holder.itemView.layoutParams as ViewGroup.MarginLayoutParams
+        if (position == storeItems.size - 1) {
+            layoutParams.bottomMargin = 150.dpToPx(holder.itemView.context)
+        }
+        holder.itemView.layoutParams = layoutParams
     }
 
     override fun getItemCount(): Int = storeItems.size
+
+    // dp를 px로 변환하는 확장 함수
+    fun Int.dpToPx(context: Context): Int {
+        return (this * context.resources.displayMetrics.density).toInt()
+    }
 
     // 필터 선택 여부에 따른 가시성 조정
     fun controlVisibility(view : View, isSelected : Boolean) {
