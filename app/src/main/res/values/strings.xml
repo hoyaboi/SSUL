@@ -1,1 +1,21 @@
-<resources></resources>
+<resources>
+    <string name="app_name">SSU:L</string>
+
+    <string name="filter_group">#단체/회식</string>
+    <string name="filter_date">#데이트</string>
+    <string name="filter_efficiency">#가성비</string>
+    <string name="filter_partner">#제휴</string>
+    <string name="filter_partner_checked">제휴</string>
+
+    <string name="search_store_text">찾으시는 가게를 입력해주세요</string>
+
+    <string name="navigation_favorites">즐겨찾기</string>
+    <string name="navigation_home">홈</string>
+    <string name="navigation_map">지도</string>
+
+    <string name="yes">예</string>
+    <string name="no">아니요</string>
+    <string name="reset_degree">학과를 재설정 하시겠습니까?</string>
+    <string name="remove_favorite">즐겨찾기에서 삭제하시겠습니까?</string>
+
+</resources>

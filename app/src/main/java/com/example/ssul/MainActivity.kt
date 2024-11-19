@@ -6,7 +6,6 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
@@ -82,7 +81,7 @@ class MainActivity : AppCompatActivity() {
 
     // 탭바 UI 설정
     private fun createTabView(title: String, icon: Int): View {
-        val view = LayoutInflater.from(this).inflate(R.layout.tab_item, null)
+        val view = LayoutInflater.from(this).inflate(R.layout.item_tab, null)
         val tabIcon = view.findViewById<ImageView>(R.id.tab_icon)
         val tabText = view.findViewById<TextView>(R.id.tab_text)
 

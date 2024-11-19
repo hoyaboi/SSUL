@@ -27,7 +27,8 @@ class FavoritesFragment : Fragment() {
     private lateinit var partnerFilterButton: TextView
     private lateinit var storeList: RecyclerView
     private lateinit var storeAdapter: StoreAdapter
-    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var favoriteSharedPreferences: SharedPreferences
+    private lateinit var degreeSharedPreferences: SharedPreferences
 
     private val sampleStoreItems = mutableListOf(
         StoreItem(
@@ -91,20 +92,22 @@ class FavoritesFragment : Fragment() {
         setupViews(view)
 
         // 구현 사항
-        // 1. 즐겨찾기 상태 불러오기 -> isFavorite은 내부 저장소, 나머지는 서버
-        //    ** 즐겨찾기 상태는 storeId와 isFavorite 매핑하여 저장 **
+        // 1. 즐겨찾기, 학과 정보 상태 불러오기
         // 2. 즐겨 찾기 제거 처리
         // 3. 가게 클릭 시 상세 화면(StoreActivity)로 이동
-        // 3. 학과 설정 버튼 클릭 시 확과 설정 액티비티(StartActivity)로 이동
-        // 4. 필터 클릭 시 현재 불러온 데이터에서 일치하는 필터만 표시 -> 선택된 필터 색상 변경
+        // 4. 학과 표시 + 학과 설정 버튼 클릭 시 확과 설정 액티비티(StartActivity)로 이동
+        // 5. 필터 클릭 시 현재 불러온 데이터에서 일치하는 필터만 표시 -> 선택된 필터 색상 변경
 
 
-        // 1. 내부 저장소에서 즐겨찾기 상태 로드
-        sharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
+        // 1. 내부 저장소에서 즐겨찾기 상태, 학과 정보 로드
+        favoriteSharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
         sampleStoreItems.forEach { item ->
-            item.isFavorite = sharedPreferences.getBoolean(item.storeId.toString(), false)
+            item.isFavorite = favoriteSharedPreferences.getBoolean(item.storeId.toString(), false)
         }
         val favoriteItems = sampleStoreItems.filter { it.isFavorite }.toMutableList() // isFavorite이 true인 항목만 필터링
+
+        degreeSharedPreferences = requireContext().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        val degree = degreeSharedPreferences.getString("selectedDepartment", "학과 정보가 없습니다")
 
         // 2. 어댑터 초기화 + 즐겨찾기 클릭 제거 로직
         // 3. 가게 클릭 처리 -> 상세 화면으로 이동
@@ -117,12 +120,16 @@ class FavoritesFragment : Fragment() {
         })
         storeList.adapter = storeAdapter
 
-        // 4. 학과 설정 클릭 시 학과 설정 액티비티로 이동
+        // 4. 학과 표시 + 학과 설정 클릭 시 학과 설정 액티비티로 이동
+        degreeTextView.text = degree
         setDegreeButton.setOnClickListener {
-            (activity as? MainActivity)?.showMessageBox("학과를 재설정 하시겠습니까?", onYesClicked = {
-                val intent = Intent(requireContext(), StartActivity::class.java)
-                startActivity(intent)
-            })
+            (activity as? MainActivity)?.showMessageBox(
+                message = getString(R.string.reset_degree),
+                onYesClicked = {
+                    val intent = Intent(requireContext(), StartActivity::class.java)
+                    startActivity(intent)
+                }
+            )
         }
 
         // 5. toggleFilter 함수로 필터 이름과 클릭된 뷰(it) 전달
@@ -130,6 +137,23 @@ class FavoritesFragment : Fragment() {
         dateFilterButton.setOnClickListener { toggleFilter("date", it as TextView) }
         efficiencyFilterButton.setOnClickListener { toggleFilter("efficiency", it as TextView) }
         partnerFilterButton.setOnClickListener { toggleFilter("partner", it as TextView) }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        // SharedPreferences를 다시 읽어들여서 데이터를 갱신
+        favoriteSharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
+        sampleStoreItems.forEach { item ->
+            item.isFavorite = favoriteSharedPreferences.getBoolean(item.storeId.toString(), false)
+        }
+        val favoriteItems = sampleStoreItems.filter { it.isFavorite }.toMutableList() // isFavorite이 true인 항목만 필터링
+
+        // 어댑터 갱신
+        storeAdapter.updateItems(favoriteItems)
+
+        // 필터 초기화
+        resetFilter()
     }
 
     private fun setupViews(view: View) {
@@ -146,7 +170,7 @@ class FavoritesFragment : Fragment() {
     // 즐겨찾기 클릭 시 내부 저장소에 상태 저장/업데이트
     private fun toggleFavorite(storeId: Int) {
         val favoriteItems = sampleStoreItems.filter { item ->
-            sharedPreferences.getBoolean(item.storeId.toString(), false)
+            favoriteSharedPreferences.getBoolean(item.storeId.toString(), false)
         }
 
         val storeItem = favoriteItems.find { it.storeId == storeId }
@@ -154,26 +178,23 @@ class FavoritesFragment : Fragment() {
             it.isFavorite = !it.isFavorite
 
             // SharedPreferences 업데이트
-            with(sharedPreferences.edit()) {
+            with(favoriteSharedPreferences.edit()) {
                 putBoolean(storeId.toString(), it.isFavorite)
                 apply()
             }
 
             // 어댑터에 데이터 업데이트
             val updatedFavoriteItems = sampleStoreItems.filter { item ->
-                sharedPreferences.getBoolean(item.storeId.toString(), false)
+                favoriteSharedPreferences.getBoolean(item.storeId.toString(), false)
             }
             storeAdapter.updateItems(updatedFavoriteItems)
-
-            // HomeFragment 갱신
-            (activity as MainActivity).refreshFragment(1)
         }
     }
 
     // 즐겨 찾기 제거
     private fun changeFavoriteStatus(storeId: Int) {
         (activity as? MainActivity)?.showMessageBox(
-            message = "즐겨찾기에서 삭제하시겠습니까?",
+            message = getString(R.string.remove_favorite),
             onYesClicked = {
                 toggleFavorite(storeId)
             }
@@ -196,7 +217,7 @@ class FavoritesFragment : Fragment() {
         // 필터링된 가게가 없을 때
         if (activeFilters.isEmpty()) {
             val favoriteItems = sampleStoreItems.filter { item ->
-                sharedPreferences.getBoolean(item.storeId.toString(), false)
+                favoriteSharedPreferences.getBoolean(item.storeId.toString(), false)
             }
             storeAdapter.updateItems(favoriteItems)
             return
@@ -204,7 +225,7 @@ class FavoritesFragment : Fragment() {
 
         // 필터링 : 가게 필터에 내가 선택한 필터 중 하나라도 일치하지 않으면 출력 X
         val filteredItems = sampleStoreItems.filter { item ->
-            sharedPreferences.getBoolean(item.storeId.toString(), false) &&
+            favoriteSharedPreferences.getBoolean(item.storeId.toString(), false) &&
                     activeFilters.all { filter ->
                         when (filter) {
                             "group" -> item.isFilterGroupChecked
@@ -216,6 +237,18 @@ class FavoritesFragment : Fragment() {
                     }
         }
         storeAdapter.updateItems(filteredItems)
+    }
+
+    private fun resetFilter() {
+        groupFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
+        groupFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
+        dateFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
+        dateFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
+        efficiencyFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
+        efficiencyFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
+        partnerFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
+        partnerFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
+        activeFilters.clear()
     }
 
 }

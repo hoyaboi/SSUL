@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
@@ -8,237 +8,316 @@
     android:background="@drawable/background_app"
     tools:context=".StoreActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scroll_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
-        <ImageView
-            android:id="@+id/store_image"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginBottom="10dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@+id/store_name_container"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:src="@mipmap/ic_launcher"
-            android:scaleType="centerCrop"/>
+            android:layout_height="wrap_content">
 
-        <ImageView
-            android:id="@+id/cacnel_button"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="24dp"
-            android:padding="5dp"
-            android:src="@drawable/ic_cancel"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <LinearLayout
-            android:id="@+id/store_name_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginEnd="24dp"
-            android:layout_marginTop="230dp"
-            android:orientation="vertical"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-
-            <LinearLayout
+            <ImageView
+                android:id="@+id/store_image"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_height="0dp"
+                android:layout_marginBottom="10dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/store_name_container"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:src="@mipmap/ic_launcher"
+                android:scaleType="centerCrop"/>
 
-                <TextView
-                    android:id="@+id/store_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:paddingStart="2dp"
-                    android:paddingEnd="2dp"
-                    android:text="Store"
-                    android:textAppearance="@style/store_name_text_style"
-                    android:textStyle="bold"/>
-
-                <ImageView
-                    android:id="@+id/filter_partner_image"
-                    android:layout_width="39dp"
-                    android:layout_height="18dp"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginTop="11dp"
-                    android:src="@drawable/filter_partner_checked"/>
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"/>
-
-                <ImageView
-                    android:id="@+id/favorite_button"
-                    android:layout_width="34dp"
-                    android:layout_height="32dp"
-                    android:layout_gravity="center_vertical"
-                    android:paddingTop="9dp"
-                    android:paddingBottom="3dp"
-                    android:src="@drawable/favorite_clicked"/>
-
-            </LinearLayout>
+            <ImageView
+                android:id="@+id/cacnel_button"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="24dp"
+                android:padding="5dp"
+                android:src="@drawable/ic_cancel"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
 
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:layout_width="11.76dp"
-                    android:layout_height="15dp"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"
-                    android:layout_gravity="center_vertical"
-                    android:src="@drawable/ic_location_pin"/>
-
-                <TextView
-                    android:id="@+id/location_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="서울 동작구 00로 00"
-                    android:textAppearance="@style/hint_text_style"/>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:layout_width="11.76dp"
-                    android:layout_height="15dp"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"
-                    android:layout_marginTop="3dp"
-                    android:src="@drawable/ic_time"/>
-
-                <TextView
-                    android:id="@+id/business_hours_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="매일 00:00 ~ 00:00"
-                    android:textAppearance="@style/hint_text_style"/>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:layout_width="11.76dp"
-                    android:layout_height="15dp"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"
-                    android:layout_gravity="center_vertical"
-                    android:src="@drawable/ic_web"/>
-
-                <TextView
-                    android:id="@+id/website_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="http://example.com"
-                    android:textAppearance="@style/hint_text_style"/>
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <View
-            android:id="@+id/seperator1"
-            android:layout_width="match_parent"
-            android:layout_height="7dp"
-            android:layout_marginTop="9dp"
-            android:background="#EEF1F4"
-            app:layout_constraintTop_toBottomOf="@id/store_name_container"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintTop_toBottomOf="@+id/seperator1">
-
-            <LinearLayout
-                android:id="@+id/partnership_container"
+                android:id="@+id/store_name_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="24dp"
                 android:layout_marginEnd="24dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="제휴정보"/>
+                android:layout_marginTop="230dp"
+                android:orientation="vertical"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/partner_name_text"
+                        android:id="@+id/store_text"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="IT대학"/>
+                        android:layout_height="match_parent"
+                        android:paddingStart="2dp"
+                        android:paddingEnd="2dp"
+                        android:text="Store"
+                        android:textAppearance="@style/store_name_text_style"
+                        android:textStyle="bold"/>
 
                     <ImageView
-                        android:layout_width="15dp"
-                        android:layout_height="15dp"
-                        android:src="@drawable/ic_partner_checked"/>
+                        android:id="@+id/filter_partner_image"
+                        android:layout_width="39dp"
+                        android:layout_height="18dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="11dp"
+                        android:src="@drawable/filter_partner_checked"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"/>
+
+                    <ImageView
+                        android:id="@+id/favorite_button"
+                        android:layout_width="34dp"
+                        android:layout_height="32dp"
+                        android:layout_gravity="center_vertical"
+                        android:paddingTop="9dp"
+                        android:paddingBottom="3dp"
+                        android:src="@drawable/favorite_clicked"/>
 
                 </LinearLayout>
-                
-                <TextView
-                    android:id="@+id/partner_info_text"
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="제휴 내용"/>
+                    android:layout_marginTop="14dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="11.76dp"
+                        android:layout_height="15dp"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/ic_location_pin"/>
+
+                    <TextView
+                        android:id="@+id/location_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="서울 동작구 00로 00"
+                        android:textAppearance="@style/hint_text_style"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="11.76dp"
+                        android:layout_height="15dp"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
+                        android:layout_marginTop="3dp"
+                        android:src="@drawable/ic_time"/>
+
+                    <TextView
+                        android:id="@+id/phone_number_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="02-000-0000"
+                        android:textAppearance="@style/hint_text_style"/>
+
+                </LinearLayout>
 
             </LinearLayout>
 
             <View
+                android:id="@+id/seperator1"
                 android:layout_width="match_parent"
                 android:layout_height="7dp"
                 android:layout_marginTop="9dp"
-                android:background="#EEF1F4"/>
-            
+                android:background="#EEF1F4"
+                app:layout_constraintTop_toBottomOf="@id/store_name_container"/>
+
             <LinearLayout
-                android:id="@+id/menu_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginEnd="24dp"
-                android:orientation="vertical">
+                android:layout_marginTop="11dp"
+                android:orientation="vertical"
+                app:layout_constraintTop_toBottomOf="@+id/seperator1">
+
+                <LinearLayout
+                    android:id="@+id/partnership_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="제휴정보"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"/>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="33dp"
+                        android:paddingStart="15dp"
+                        android:paddingEnd="15dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/partner_name_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="IT대학"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/black"/>
+
+                        <ImageView
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:layout_marginStart="5dp"
+                            android:src="@drawable/ic_partner_checked"/>
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/partner_info_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="33dp"
+                        android:padding="15dp"
+                        android:text="제휴 내용"
+                        android:textSize="14sp"
+                        android:textColor="#616161"/>
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="7dp"
+                    android:background="#EEF1F4"/>
+
+                <LinearLayout
+                    android:id="@+id/menu_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="11dp"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="메뉴"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/menu_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <!--  메시지 박스  -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/message_box"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="30dp"
+        android:background="#1A000000"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/message_box_container"
+            android:layout_width="363dp"
+            android:layout_height="178dp"
+            android:background="@drawable/frame_message_box"
+            android:orientation="vertical"
+            android:paddingTop="30dp"
+            android:paddingBottom="30dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:id="@+id/message_box_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/remove_favorite"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textAppearance="@style/message_box_text_style"
+                android:textAlignment="center"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:orientation="horizontal">
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="메뉴"/>
-                
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/menu_list"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-                
+                    android:id="@+id/message_box_yes_button"
+                    android:layout_width="154dp"
+                    android:layout_height="46dp"
+                    android:gravity="center"
+                    android:text="@string/yes"
+                    android:textAppearance="@style/message_box_yes_style"
+                    android:background="@drawable/background_message_box_yes"/>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"/>
+
+                <TextView
+                    android:id="@+id/message_box_no_button"
+                    android:layout_width="154dp"
+                    android:layout_height="46dp"
+                    android:gravity="center"
+                    android:text="@string/no"
+                    android:textAppearance="@style/message_box_no_style"
+                    android:background="@drawable/background_message_box_no"/>
+
             </LinearLayout>
 
         </LinearLayout>
 
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</androidx.core.widget.NestedScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
 

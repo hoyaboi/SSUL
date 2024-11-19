@@ -19,8 +19,7 @@ data class StoreInfo(
     val isFilterPartnerChecked: Boolean,        // 제휴 정보
     var isFavorite: Boolean,                    // 즐겨찾기 상태
     var locationText: String = "정보 없음",       // 위치 텍스트
-    var businessHours: String = "정보 없음",      // 영업 시간(Optional)
-    var officialWebsite: String = "정보 없음",    // 공식 사이트 URL(Optional)
+    var phoneText: String = "정보 없음",          // 번호 텍스트
     val partnerships: List<Pair<String, String>> = emptyList(), // 제휴 정보 리스트
     val menuItems: List<MenuItem> = emptyList() // 메뉴 리스트
 ) {

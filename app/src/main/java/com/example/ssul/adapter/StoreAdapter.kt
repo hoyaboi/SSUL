@@ -68,7 +68,9 @@ class StoreAdapter(
         // 마지막 아이템인 경우 아래 마진 추가
         val layoutParams = holder.itemView.layoutParams as ViewGroup.MarginLayoutParams
         if (position == storeItems.size - 1) {
-            layoutParams.bottomMargin = 150.dpToPx(holder.itemView.context)
+            layoutParams.bottomMargin = 50.dpToPx(holder.itemView.context)
+        } else {
+            layoutParams.bottomMargin = 0
         }
         holder.itemView.layoutParams = layoutParams
     }

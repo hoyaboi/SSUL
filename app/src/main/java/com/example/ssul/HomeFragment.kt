@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SearchView
@@ -33,16 +34,19 @@ class HomeFragment : Fragment() {
     private lateinit var searchTextView: TextView
     private lateinit var searchEditText: EditText
     private lateinit var searchButton: ImageView
+    private lateinit var filterContainer: HorizontalScrollView
     private lateinit var groupFilterButton: TextView
     private lateinit var dateFilterButton: TextView
     private lateinit var efficiencyFilterButton: TextView
     private lateinit var partnerFilterButton: TextView
     private lateinit var storeList: RecyclerView
+    private lateinit var searchList: RecyclerView
     private lateinit var storeAdapter: StoreAdapter
+    private lateinit var searchAdapter: StoreAdapter
     private lateinit var sharedPreferences: SharedPreferences
 
     private var isSearchScreenOpen = false
-
+    private var searchedStoreItems = mutableListOf<StoreItem>()
     private val sampleStoreItems = mutableListOf(
         StoreItem(
             storeId = 1,
@@ -121,6 +125,7 @@ class HomeFragment : Fragment() {
 
         // 2-1. 검색 텍스트 필드 클릭 시 검색 화면으로 전환
         searchTextView.setOnClickListener {
+
             openSearchScreen()
         }
         // 2-2. 검색 결과 처리
@@ -128,7 +133,7 @@ class HomeFragment : Fragment() {
             if(isSearchScreenOpen) {
                 val query = searchEditText.text.toString().trim()
                 if (query.isNotBlank()) {
-                    filterStoreList(query)
+                    searchedStoreItems = filterStoreList(query).toMutableList() // 저장
                     Log.d("SearchButton", "Search query: $query")
                 }
             }
@@ -137,6 +142,9 @@ class HomeFragment : Fragment() {
         searchEditText.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 searchButton.performClick()
+                val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                inputMethodManager.hideSoftInputFromWindow(searchEditText.windowToken, 0)
+                searchEditText.clearFocus()
                 true
             } else {
                 false
@@ -149,17 +157,29 @@ class HomeFragment : Fragment() {
         efficiencyFilterButton.setOnClickListener { toggleFilter("efficiency", it as TextView) }
         partnerFilterButton.setOnClickListener { toggleFilter("partner", it as TextView) }
 
-        // 4. 어댑터 초기화 + 즐겨찾기 상태 변경 로직
-        // 5. 가게 클릭 시 세부 정보 화면으로 이동
-        storeAdapter = StoreAdapter(sampleStoreItems, { storeId ->
-            changeFavoriteStatus(storeId)
-        }, { storeId ->
-            val intent = Intent(requireContext(), StoreActivity::class.java)
-            intent.putExtra("storeId", storeId)
-            startActivity(intent)
-        })
-        storeList.adapter = storeAdapter
+        // 4. 어댑터 초기화
+        setupAdapters()
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        // SharedPreferences를 다시 읽어들여서 데이터를 갱신
+        sharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
+        sampleStoreItems.forEach { item ->
+            item.isFavorite = sharedPreferences.getBoolean(item.storeId.toString(), false)
+        }
+        searchedStoreItems.forEach { item ->
+            item.isFavorite = sharedPreferences.getBoolean(item.storeId.toString(), false)
+        }
+
+        // 어댑터 갱신
+        storeAdapter.updateItems(sampleStoreItems)
+        searchAdapter.updateItems(searchedStoreItems)
+
+        // 필터 초기화
+        resetFilter()
     }
 
     private fun setupViews(view: View) {
@@ -168,12 +188,39 @@ class HomeFragment : Fragment() {
         searchTextView = view.findViewById(R.id.search_text)
         searchEditText = view.findViewById(R.id.search_store_textfield)
         searchButton = view.findViewById(R.id.search_button)
+        filterContainer = view.findViewById(R.id.filter_container)
         groupFilterButton = view.findViewById(R.id.filter_group_button)
         dateFilterButton = view.findViewById(R.id.filter_date_button)
         efficiencyFilterButton = view.findViewById(R.id.filter_efficiency_button)
         partnerFilterButton = view.findViewById(R.id.filter_partner_button)
         storeList = view.findViewById(R.id.store_list)
         storeList.layoutManager = LinearLayoutManager(requireContext())
+        searchList = view.findViewById(R.id.search_list)
+        searchList.layoutManager = LinearLayoutManager(requireContext())
+    }
+
+    private fun setupAdapters() {
+        // 가게 리스트 어댑터 초기화
+        storeAdapter = StoreAdapter(sampleStoreItems, { storeId ->
+            // 즐겨찾기 상태 변경
+            changeFavoriteStatus(storeId)
+        }, { storeId ->
+            // 가게 클릭 시 세부 정보 화면으로 이동
+            val intent = Intent(requireContext(), StoreActivity::class.java)
+            intent.putExtra("storeId", storeId)
+            startActivity(intent)
+        })
+        storeList.adapter = storeAdapter
+
+        // 검색 리스트 어댑터 초기화
+        searchAdapter = StoreAdapter(searchedStoreItems, { storeId ->
+            changeFavoriteStatus(storeId)
+        }, { storeId ->
+            val intent = Intent(requireContext(), StoreActivity::class.java)
+            intent.putExtra("storeId", storeId)
+            startActivity(intent)
+        })
+        searchList.adapter = searchAdapter
     }
 
     // 검색 화면 전환 함수(open)
@@ -182,6 +229,7 @@ class HomeFragment : Fragment() {
         searchEditText.visibility = View.VISIBLE
         ssulIcon.visibility = View.GONE
         searchTextView.visibility = View.GONE
+        filterContainer.visibility = View.GONE
         storeList.visibility = View.GONE
 
         searchEditText.requestFocus()
@@ -203,7 +251,9 @@ class HomeFragment : Fragment() {
         searchEditText.visibility = View.GONE
         ssulIcon.visibility = View.VISIBLE
         searchTextView.visibility = View.VISIBLE
+        filterContainer.visibility = View.VISIBLE
         storeList.visibility = View.VISIBLE
+        searchList.visibility = View.GONE
 
         searchEditText.clearFocus()
         searchEditText.setText("")
@@ -230,19 +280,30 @@ class HomeFragment : Fragment() {
 
     // 즐겨찾기 클릭 시 내부 저장소에 상태 저장/업데이트
     private fun toggleFavorite(storeId: Int) {
-        val storeItem = sampleStoreItems.find { it.storeId == storeId }
-        storeItem?.let {
-            it.isFavorite = !it.isFavorite
-            storeAdapter.notifyDataSetChanged()
+        if (isSearchScreenOpen) {
+            val storeItem = searchedStoreItems.find { it.storeId == storeId }
+            storeItem?.let {
+                it.isFavorite = !it.isFavorite
+                searchAdapter.updateItems(searchedStoreItems)
 
-            // SharedPreferences 업데이트
-            with(sharedPreferences.edit()) {
-                putBoolean(storeId.toString(), it.isFavorite)
-                apply()
+                // SharedPreferences 업데이트
+                with(sharedPreferences.edit()) {
+                    putBoolean(storeId.toString(), it.isFavorite)
+                    apply()
+                }
             }
+        } else {
+            var storeItem = sampleStoreItems.find { it.storeId == storeId }
+            storeItem?.let {
+                it.isFavorite = !it.isFavorite
+                storeAdapter.updateItems(sampleStoreItems)
 
-            // FavoritesFragment 갱신
-            (activity as MainActivity).refreshFragment(0)
+                // SharedPreferences 업데이트
+                with(sharedPreferences.edit()) {
+                    putBoolean(storeId.toString(), it.isFavorite)
+                    apply()
+                }
+            }
         }
     }
 
@@ -252,7 +313,7 @@ class HomeFragment : Fragment() {
         if (storeItem?.isFavorite == true) {
             // 즐겨 찾기 체크가 되어 있는 경우
             (activity as? MainActivity)?.showMessageBox(
-                message = "즐겨찾기에서 삭제하시겠습니까?",
+                message = getString(R.string.remove_favorite),
                 onYesClicked = {
                     toggleFavorite(storeId)
                 }
@@ -314,7 +375,7 @@ class HomeFragment : Fragment() {
     }
 
     // 검색 필터링 함수
-    private fun filterStoreList(query: String) {
+    private fun filterStoreList(query: String): List<StoreItem> {
         // 가게 이름과 한 글자라도 일치하면 필터링
         val filteredItems = sampleStoreItems.filter { storeItem ->
             query.all { char ->
@@ -327,9 +388,22 @@ class HomeFragment : Fragment() {
             Toast.makeText(requireContext(), "검색 결과가 없습니다.", Toast.LENGTH_SHORT).show()
         } else {
             // 필터링된 리스트 업데이트
-            storeAdapter.updateItems(filteredItems)
-            storeList.visibility = View.VISIBLE
+            searchAdapter.updateItems(filteredItems)
+            searchList.visibility = View.VISIBLE
         }
+
+        return filteredItems
     }
 
+    private fun resetFilter() {
+        groupFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
+        groupFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
+        dateFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
+        dateFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
+        efficiencyFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
+        efficiencyFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
+        partnerFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
+        partnerFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
+        activeFilters.clear()
+    }
 }
