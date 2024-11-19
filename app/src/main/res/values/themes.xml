@@ -5,5 +5,8 @@
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
-    <style name="Theme.SSUL" parent="Base.Theme.SSUL" />
+    <style name="Theme.SSUL" parent="Base.Theme.SSUL" >
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+
 </resources>

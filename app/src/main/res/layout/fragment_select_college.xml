@@ -51,8 +51,9 @@
         android:background="@drawable/spinner_background"
         android:spinnerMode="dropdown"
         android:fontFamily="@font/regular_font"
-        android:layout_marginBottom="32dp" />
-
+        android:layout_marginBottom="32dp"
+        android:textSize="18sp"
+        android:popupBackground="@drawable/spinner_dropdown_background" />
 
 
 </LinearLayout>

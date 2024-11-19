@@ -43,8 +43,8 @@ class SelectCollegeFragment : Fragment() {
                 "베어드교양학과"
             )
 
-            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, colleges)
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            val adapter = ArrayAdapter(requireContext(), R.layout.spinner_item, colleges)
+            adapter.setDropDownViewResource(R.layout.spinner_dropdown_item)
             it.adapter = adapter
 
             it.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {

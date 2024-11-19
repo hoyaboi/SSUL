@@ -6,4 +6,9 @@
         android:fontWeight="400"
         android:font="@font/regular_font"/>
 
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        android:font="@font/thin_font"/>
+
 </font-family>

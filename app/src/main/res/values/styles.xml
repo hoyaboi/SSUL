@@ -44,5 +44,9 @@
         <item name="android:textSize">25sp</item>
         <item name="android:textColor">#212122</item>
     </style>
+    <style name="Widget.Theme.SSUL.MyView" parent="">
+        <item name="android:background">@color/gray_400</item>
+        <item name="exampleColor">@color/light_blue_400</item>
+    </style>
 
 </resources>

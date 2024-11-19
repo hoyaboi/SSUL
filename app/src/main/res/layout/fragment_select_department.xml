@@ -43,12 +43,14 @@
         />
 
     <Spinner
+        android:id="@+id/departmentSpinner"
         android:layout_width="250dp"
         android:layout_height="wrap_content"
         android:background="@drawable/spinner_background"
         android:spinnerMode="dropdown"
         android:fontFamily="@font/regular_font"
         android:layout_marginBottom="32dp"
-        android:id="@+id/departmentSpinner" />
+        android:textSize="18sp"
+        android:popupBackground="@drawable/spinner_dropdown_background" />
 
 </LinearLayout>
