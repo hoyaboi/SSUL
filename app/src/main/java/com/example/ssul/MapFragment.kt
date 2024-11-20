@@ -1,12 +1,17 @@
 package com.example.ssul
 
+import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.ssul.model.TestModel
@@ -31,6 +36,10 @@ class MapFragment : Fragment() {
     private lateinit var locationSource: FusedLocationSource
     private var polyline: PolylineOverlay? = null
     private val markerList = mutableListOf<Marker>()
+
+    private var selectedMarker: Marker? = null // 선택된 마커 저장
+    private var storeInfoPopup: View? = null // 팝업 뷰 참조
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -62,6 +71,7 @@ class MapFragment : Fragment() {
 
             // UI 설정 (현재 위치 버튼 등)
             naverMap.uiSettings.isLocationButtonEnabled = true
+            setupMapClickListener() // 지도 클릭 이벤트 초기화
         }
     }
 
@@ -123,10 +133,8 @@ class MapFragment : Fragment() {
     }
 
     private fun updateMarkers(storeList: List<TestModel>) {
-        // 기존 마커 제거
-        clearExistingMarkers()
+        clearExistingMarkers() // 기존 마커 제거
 
-        // 새로운 마커 추가
         storeList.forEach { store ->
             val marker = Marker().apply {
                 position = LatLng(store.latitude, store.longitude)
@@ -134,12 +142,125 @@ class MapFragment : Fragment() {
                 captionText = store.name
                 icon = OverlayImage.fromResource(R.drawable.ic_store)
                 captionColor = Color.rgb(0xAF, 0x8E, 0xFF)
+
                 setOnClickListener {
-                    showRouteToStore(position)
+                    handleMarkerClick(this, store) // 마커 클릭 이벤트 처리
                     true
                 }
             }
             markerList.add(marker)
+        }
+    }
+
+    private fun handleMarkerClick(marker: Marker, store: TestModel) {
+        // 이전 선택된 마커 복구
+        selectedMarker?.let {
+            it.icon = OverlayImage.fromResource(R.drawable.ic_store) // 기본 아이콘 복구
+        }
+
+        // 현재 마커 선택 상태로 변경
+        selectedMarker = marker
+        marker.icon = OverlayImage.fromResource(R.drawable.ic_store_selected) // 선택된 아이콘으로 변경
+
+        // 가게 정보 팝업 표시
+        showStoreInfoPopup(store)
+
+        // 선택된 가게까지의 경로 표시
+        showRouteToStore(marker.position)
+    }
+
+    // 팝업 표시
+    private fun showStoreInfoPopup(store: TestModel) {
+        // 기존 팝업 제거
+        storeInfoPopup?.let {
+            (it.parent as? ViewGroup)?.removeView(it)
+            storeInfoPopup = null
+        }
+
+        // 팝업 레이아웃 인플레이션
+        val popupView = layoutInflater.inflate(R.layout.popup_store_info, null).apply {
+            val storeName = findViewById<TextView>(R.id.store_name)
+            val storeAddress = findViewById<TextView>(R.id.store_address)
+            val favoriteButton = findViewById<ImageView>(R.id.favorite_button)
+
+            storeName.text = store.name
+            storeAddress.text = "주소: ${store.latitude}, ${store.longitude}"
+
+            // SharedPreferences에서 즐겨찾기 상태 로드
+            val sharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
+            val isFavorite = sharedPreferences.getBoolean(store.name, false)
+
+            // 초기 즐겨찾기 버튼 상태 설정
+            updateFavoriteButtonState(favoriteButton, isFavorite)
+
+            // 즐겨찾기 버튼 클릭 리스너
+            favoriteButton.setOnClickListener {
+                val currentFavoriteState = sharedPreferences.getBoolean(store.name, false)
+
+                if (currentFavoriteState) {
+                    // 이미 즐겨찾기인 경우 제거 여부 확인
+                    (activity as? MainActivity)?.showMessageBox(
+                        message = getString(R.string.remove_favorite),
+                        onYesClicked = {
+                            // 즐겨찾기 제거
+                            sharedPreferences.edit().putBoolean("1", false).apply()
+                            updateFavoriteButtonState(favoriteButton, false)
+                        }
+                    )
+                } else {
+                    // 즐겨찾기 추가
+                    sharedPreferences.edit().putBoolean("1", true).apply()
+                    updateFavoriteButtonState(favoriteButton, true)
+                }
+            }
+        }
+
+        // 팝업의 위치와 크기를 조정하여 추가
+        val layoutParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            // 위치 조정 (마커의 아래쪽에 표시)
+            setMargins(20, 50, 20, 20)
+            gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+        }
+
+        // 루트 컨테이너에 팝업 추가
+        (view as? ViewGroup)?.addView(popupView, layoutParams)
+        storeInfoPopup = popupView
+
+        // 팝업 클릭 시 StoreActivity로 이동
+        popupView.setOnClickListener {
+            val intent = Intent(requireContext(), StoreActivity::class.java).apply {
+                putExtra("store_name", store.name)
+                putExtra("store_address", "${store.latitude}, ${store.longitude}")
+            }
+            startActivity(intent)
+        }
+    }
+
+    // 즐겨찾기 버튼 상태 업데이트 메소드
+    private fun updateFavoriteButtonState(favoriteButton: ImageView, isFavorite: Boolean) {
+        favoriteButton.setImageResource(
+            if (isFavorite) R.drawable.favorite_clicked
+            else R.drawable.favorite_non_clicked
+        )
+    }
+
+    // 지도 클릭 시 팝업 제거 및 마커 복구
+    private fun setupMapClickListener() {
+        naverMap.setOnMapClickListener { _, _ ->
+            // 팝업 제거
+            storeInfoPopup?.let {
+                (it.parent as? ViewGroup)?.removeView(it)
+                storeInfoPopup = null
+            }
+
+            // 선택된 마커 초기화
+            selectedMarker?.let {
+                it.icon = OverlayImage.fromResource(R.drawable.ic_store)
+                selectedMarker = null
+            }
         }
     }
 
