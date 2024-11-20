@@ -29,9 +29,9 @@ class StoreAdapter(
         private val filterPartner: TextView = itemView.findViewById(R.id.filter_partner_image)
 
         fun bind(item: StoreItem) {
-            storeImage.setImageResource(item.storeImage)
-            storeText.text = item.storeText
-            locationText.text = item.locationText
+            storeImage.setImageResource(item.imageUrl)
+            storeText.text = item.name
+            locationText.text = item.address
 
             // 즐겨찾기 가시성 조정
             favoriteButton.setImageResource(
@@ -40,18 +40,18 @@ class StoreAdapter(
 
             // 즐겨찾기 클릭 처리
             favoriteButton.setOnClickListener {
-                onFavoriteClicked(item.storeId)
+                onFavoriteClicked(item.id)
             }
 
             // 필터 가시성 조정
-            controlVisibility(filterPartner, item.isFilterPartnerChecked)
+            controlVisibility(filterPartner, item.isAssociated)
             controlVisibility(filterGroup, item.isFilterGroupChecked)
             controlVisibility(filterDate, item.isFilterDateChecked)
             controlVisibility(filterEfficiency, item.isFilterEfficiencyChecked)
 
             // 가게 클릭 처리 -> 세부 화면으로 이동
             storeContainer.setOnClickListener {
-                onStoreClicked(item.storeId)
+                onStoreClicked(item.id)
             }
         }
     }
