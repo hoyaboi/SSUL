@@ -10,6 +10,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.ssul.adapter.MenuAdapter
 
 class StoreActivity : AppCompatActivity() {
 
@@ -20,158 +23,51 @@ class StoreActivity : AppCompatActivity() {
     private lateinit var favoriteButton: ImageView
     private lateinit var locationTextView: TextView
     private lateinit var phoneNumberTextView: TextView
+    private lateinit var partnershipContainer: LinearLayout
+    private lateinit var degreeTextView: TextView
+    private lateinit var partnerInfoTextView: TextView
+    private lateinit var menuList: RecyclerView
+    private lateinit var menuAdapter: MenuAdapter
 
     private lateinit var messageBox: ConstraintLayout
     private lateinit var messageBoxYesButton: TextView
     private lateinit var messageBoxNoButton: TextView
     private lateinit var sharedPreferences: SharedPreferences
 
-
-    private val sampleStoreInfo = mutableListOf(
-        StoreInfo(
-            storeId = 1,
-            storeImage = R.drawable.sample_store1,
-            storeText = "블루힐",
-            isFilterPartnerChecked = false,
-            isFavorite = false,
-            locationText = "서울 동작구 사당로 14",
-            phoneText = "02-123-4567",
-            menuItems = listOf(
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 1",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 2",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 3",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 4",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 5",
-                    menuPrice = "500원"
-                )
-            )
-        ),
-        StoreInfo(
-            storeId = 2,
-            storeImage = R.drawable.sample_store2,
-            storeText = "스팅 (BAR)",
-            isFilterPartnerChecked = false,
-            isFavorite = false,
-            locationText = "서울 동작구 사당로 8 2층",
-            phoneText = "02-123-4567",
-            menuItems = listOf(
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 1",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 2",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 3",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 4",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 5",
-                    menuPrice = "500원"
-                )
-            )
-        ),
-        StoreInfo(
-            storeId = 3,
-            storeImage = R.drawable.sample_store3,
-            storeText = "파동추야",
-            isFilterPartnerChecked = true,
-            isFavorite = false,
-            locationText = "서울 동작구 상도로58번길",
-            phoneText = "02-123-4567",
-            partnerships = listOf("IT대학" to "모든 안주 무료"),
-            menuItems = listOf(
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 1",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 2",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 3",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 4",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 5",
-                    menuPrice = "500원"
-                )
-            )
-        ),
-        StoreInfo(
-            storeId = 4,
-            storeImage = R.drawable.sample_store4,
-            storeText = "역전할머니맥주",
-            isFilterPartnerChecked = true,
-            isFavorite = false,
-            locationText = "서울 동작구 상도로61길 40",
-            phoneText = "02-123-4567",
-            partnerships = listOf("IT대학" to "모든 안주 무료"),
-            menuItems = listOf(
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 1",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 2",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 3",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 4",
-                    menuPrice = "500원"
-                ),
-                StoreInfo.MenuItem(
-                    menuImage = R.mipmap.ic_launcher,
-                    menuName = "메뉴 5",
-                    menuPrice = "500원"
-                )
+    private val sampleStoreInfo = StoreInfo(
+        storeId = 3,
+        storeImage = R.drawable.sample_store3,
+        storeText = "파동추야",
+        isFilterPartnerChecked = true,
+        isFavorite = false,
+        locationText = "서울 동작구 상도로58번길",
+        phoneText = "02-123-4567",
+        partnerships = listOf("IT대학" to "모든 안주 무료"),
+        menuItems = listOf(
+            StoreInfo.MenuItem(
+                menuImage = R.mipmap.ic_launcher,
+                menuName = "메뉴 1",
+                menuPrice = "500원"
+            ),
+            StoreInfo.MenuItem(
+                menuImage = R.mipmap.ic_launcher,
+                menuName = "메뉴 2",
+                menuPrice = "500원"
+            ),
+            StoreInfo.MenuItem(
+                menuImage = R.mipmap.ic_launcher,
+                menuName = "메뉴 3",
+                menuPrice = "500원"
+            ),
+            StoreInfo.MenuItem(
+                menuImage = R.mipmap.ic_launcher,
+                menuName = "메뉴 4",
+                menuPrice = "500원"
+            ),
+            StoreInfo.MenuItem(
+                menuImage = R.mipmap.ic_launcher,
+                menuName = "메뉴 5",
+                menuPrice = "500원"
             )
         )
     )
@@ -185,7 +81,7 @@ class StoreActivity : AppCompatActivity() {
 
         // 선택된 가게 저장
         val storeId = intent.getIntExtra("storeId", 0)
-        val currentStore = sampleStoreInfo.find { it.storeId == storeId }
+        val currentStore = sampleStoreInfo
 
         setupViews()
 
@@ -199,9 +95,7 @@ class StoreActivity : AppCompatActivity() {
 
         // 1. 즐겨찾기 정보 불러오기
         sharedPreferences = this.getSharedPreferences("favorite", Context.MODE_PRIVATE)
-        sampleStoreInfo.forEach { item ->
-            item.isFavorite = sharedPreferences.getBoolean(item.storeId.toString(), false)
-        }
+        sampleStoreInfo.isFavorite = sharedPreferences.getBoolean(sampleStoreInfo.storeId.toString(), false)
 
         // 2. 가게 이미지 정보 입력 + 뒤로 가기 버튼 기능 구현
         setStoreInfoImage(currentStore)
@@ -215,9 +109,11 @@ class StoreActivity : AppCompatActivity() {
         }
 
         // 4. 제휴 정보 입력
+        setPartnership(currentStore)
 
         // 5. 메뉴 정보 입력
-
+        menuAdapter = MenuAdapter(currentStore.menuItems)
+        menuList.adapter = menuAdapter
     }
 
     private fun setupViews() {
@@ -228,6 +124,11 @@ class StoreActivity : AppCompatActivity() {
         favoriteButton = findViewById(R.id.favorite_button)
         locationTextView = findViewById(R.id.location_text)
         phoneNumberTextView = findViewById(R.id.phone_number_text)
+        partnershipContainer = findViewById(R.id.partnership_container)
+        degreeTextView = findViewById(R.id.degree_text)
+        partnerInfoTextView = findViewById(R.id.partner_info_text)
+        menuList = findViewById(R.id.menu_list)
+        menuList.layoutManager = LinearLayoutManager(this)
 
         messageBox = findViewById(R.id.message_box)
         messageBoxYesButton = findViewById(R.id.message_box_yes_button)
@@ -316,6 +217,17 @@ class StoreActivity : AppCompatActivity() {
 
         // UI 갱신
         setStoreInfoContainer(currentStore)
+    }
+
+    // 제휴 정보 설정 함수
+    private fun setPartnership(store: StoreInfo) {
+        if (store.isFilterPartnerChecked) {
+            partnershipContainer.visibility = View.VISIBLE
+            degreeTextView.text = store.partnerships[0].first
+            partnerInfoTextView.text = store.partnerships[0].second
+        } else {
+            partnershipContainer.visibility = View.GONE
+        }
     }
 
 }
