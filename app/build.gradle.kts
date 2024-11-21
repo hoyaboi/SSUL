@@ -80,4 +80,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest) // 최적 위치 정보 받아오는 것
     implementation("com.github.bumptech.glide:glide:4.12.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")//스플래시 화면
+
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 }

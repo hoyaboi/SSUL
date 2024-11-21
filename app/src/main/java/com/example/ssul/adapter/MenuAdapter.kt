@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.ssul.R
 import com.example.ssul.StoreInfo
 
@@ -26,7 +27,11 @@ class MenuAdapter(private val menuList: List<StoreInfo.MenuItem>) :
 
     override fun onBindViewHolder(holder: MenuViewHolder, position: Int) {
         val menuItem = menuList[position]
-        holder.menuImage.setImageResource(menuItem.imageUrl)
+        Glide.with(holder.menuImage.context)
+            .load(menuItem.imageUrl)
+            .placeholder(R.drawable.default_image)
+            .error(R.drawable.default_image)
+            .into(holder.menuImage)
         holder.menuText.text = menuItem.name
         holder.priceText.text = menuItem.price
     }

@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.ssul.R
 import com.example.ssul.StoreItem
 
@@ -29,7 +30,12 @@ class StoreAdapter(
         private val filterPartner: TextView = itemView.findViewById(R.id.filter_partner_image)
 
         fun bind(item: StoreItem) {
-            storeImage.setImageResource(item.imageUrl)
+            // 가게 정보 로드(이미지, 가게 이름, 주소)
+            Glide.with(storeImage.context)
+                .load(item.imageUrl)
+                .placeholder(R.drawable.default_image)
+                .error(R.drawable.default_image)
+                .into(storeImage)
             storeText.text = item.name
             locationText.text = item.address
 

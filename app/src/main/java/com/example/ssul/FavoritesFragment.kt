@@ -12,9 +12,11 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ssul.adapter.StoreAdapter
+import kotlinx.coroutines.launch
 
 class FavoritesFragment : Fragment() {
 
@@ -30,8 +32,12 @@ class FavoritesFragment : Fragment() {
     private lateinit var favoriteSharedPreferences: SharedPreferences
     private lateinit var degreeSharedPreferences: SharedPreferences
 
-    private lateinit var storeItems: MutableList<StoreItem> // 전체 가게 리스트
+    private var storeItems: MutableList<StoreItem> = mutableListOf() // 전체 가게 리스트
     private val activeFilters = mutableSetOf<String>()
+
+    fun setStoreItems(items: MutableList<StoreItem>) {
+        storeItems = items
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -58,10 +64,7 @@ class FavoritesFragment : Fragment() {
         favoriteSharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
         degreeSharedPreferences = requireContext().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
 
-        // 2. 가게 전체 리스트 API 요청 + 즐겨찾기 상태 업데이트
-        val college = degreeSharedPreferences.getString("selectedCollege", "")
-        val degree = degreeSharedPreferences.getString("selectedDepartment", "")
-        storeItems = getStores(college!!, degree!!)
+        // 2. 즐겨찾기 로드
         storeItems.forEach { item ->
             item.isFavorite = favoriteSharedPreferences.getBoolean(item.id.toString(), false)
         }
@@ -76,6 +79,7 @@ class FavoritesFragment : Fragment() {
         storeList.adapter = storeAdapter
 
         // 4. 학과 표시 + 학과 설정 클릭 시 학과 설정 액티비티로 이동
+        val degree = degreeSharedPreferences.getString("selectedDepartment", "")
         degreeTextView.text = degree
         setDegreeButton.setOnClickListener {
             (activity as? MainActivity)?.showMessageBox(
@@ -102,13 +106,9 @@ class FavoritesFragment : Fragment() {
         storeItems.forEach { item ->
             item.isFavorite = favoriteSharedPreferences.getBoolean(item.id.toString(), false)
         }
-        val favoriteItems = storeItems.filter { it.isFavorite }.toMutableList() // isFavorite이 true인 항목만 필터링
 
-        // 어댑터 갱신
-        storeAdapter.updateItems(favoriteItems)
-
-        // 필터 초기화
-        resetFilter()
+        // 어댑터 갱신 -> 필터 적용한 상태였으면 필터 상태 복구
+        applyFilters()
     }
 
     private fun setupViews(view: View) {
@@ -143,6 +143,7 @@ class FavoritesFragment : Fragment() {
                 favoriteSharedPreferences.getBoolean(item.id.toString(), false)
             }
             storeAdapter.updateItems(updatedFavoriteItems)
+            applyFilters()
         }
     }
 
@@ -194,17 +195,28 @@ class FavoritesFragment : Fragment() {
         storeAdapter.updateItems(filteredItems)
     }
 
-    // 필터 초기화
-    private fun resetFilter() {
-        groupFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
-        groupFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
-        dateFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
-        dateFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
-        efficiencyFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
-        efficiencyFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
-        partnerFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
-        partnerFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
-        activeFilters.clear()
+    // 필터 복구
+    private fun applyFilters() {
+        val favoriteItems = storeItems.filter { it.isFavorite }
+
+        if (activeFilters.isEmpty()) {
+            // 필터가 없으면 전체 즐겨찾기 데이터를 표시
+            storeAdapter.updateItems(favoriteItems)
+        } else {
+            // 필터가 있으면 조건에 맞는 데이터만 필터링
+            val filteredItems = favoriteItems.filter { item ->
+                activeFilters.all { filter ->
+                    when (filter) {
+                        "group" -> item.isFilterGroupChecked
+                        "date" -> item.isFilterDateChecked
+                        "efficiency" -> item.isFilterEfficiencyChecked
+                        "partner" -> item.isAssociated
+                        else -> false
+                    }
+                }
+            }
+            storeAdapter.updateItems(filteredItems)
+        }
     }
 
     // 가게 세부 화면 이동

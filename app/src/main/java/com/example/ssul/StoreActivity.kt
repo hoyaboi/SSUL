@@ -7,12 +7,16 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.ssul.adapter.MenuAdapter
+import kotlinx.coroutines.launch
 
 class StoreActivity : AppCompatActivity() {
 
@@ -48,48 +52,55 @@ class StoreActivity : AppCompatActivity() {
 
         // 구현 사항
         // 1. 즐겨찾기, 학과 정보 불러오기
-        // 2. 선택된 가게 불러오기 + API 요청
-        // 3. 레이아웃 표시: 가게 이미지 정보 입력 + 뒤로 가기 버튼 기능
-        // 4. 레이아웃 표시: 가게 정보 컨테이너 입력 + 즐겨찾기 클릭 처리
-        // 5. 레이아웃 표시: 제휴 정보 입력
-        // 6. 레이아웃 표시: 메뉴 정보 입력
+        // 2. 선택된 가게 불러오기
+        // 3. API 요청 및 UI 업데이트
+        // 4. 기타 버튼 동작 설정(뒤로가기, 즐겨찾기)
 
 
         // 1. 즐겨찾기, 학과 정보 불러오기
         favoriteSharedPreferences = this.getSharedPreferences("favorite", Context.MODE_PRIVATE)
         degreeSharedPreferences = this.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
 
-        // 2-1. 선택된 가게 불러오기
+        // 2. 선택된 가게 불러오기
         val storeId = intent.getIntExtra("storeId", 0)
-        val storeImage = intent.getIntExtra("storeImage", 0)
+        val storeImageUrl = intent.getStringExtra("storeImage")
 
-        // 2-2. 선택된 가게 API 요청(college와 degree 전달) + 가게 이미지 설정
-        val college = degreeSharedPreferences.getString("selectedCollege", "")
-        val degree = degreeSharedPreferences.getString("selectedDepartment", "")
-        storeInfo = getStoreInfo(storeId, college!!, degree!!)
-        storeInfo.isFavorite = favoriteSharedPreferences.getBoolean(storeInfo.id.toString(), false)
-        storeInfo.imageUrl = storeImage
+        // 3. API 요청 및 UI 업데이트
+        lifecycleScope.launch {
+            try {
+                val college = degreeSharedPreferences.getString("selectedCollege", "")
+                val degree = degreeSharedPreferences.getString("selectedDepartment", "")
 
-        // 3. 레이아웃 표시: 가게 이미지 정보 입력 + 뒤로 가기 버튼 기능 구현
-        setStoreInfoImage(storeInfo)
+                // API 요청
+                storeInfo = getStoreInfo(storeId, college!!, degree!!)
+                storeInfo.isFavorite = favoriteSharedPreferences.getBoolean(storeInfo.id.toString(), false)
+
+                // UI 업데이트
+                Glide.with(this@StoreActivity).clear(storeImage)
+                Glide.with(this@StoreActivity)
+                    .load(storeImageUrl)
+                    .into(storeImage)
+
+                setStoreInfoContainer(storeInfo)
+                setPartnership(storeInfo)
+
+                menuAdapter = MenuAdapter(storeInfo.menus)
+                menuList.adapter = menuAdapter
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(this@StoreActivity, "가게 정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+        }
+
+        // 4. 기타 버튼 동작 설정(뒤로가기, 즐겨찾기)
         cancelButton.setOnClickListener {
             finish()
         }
 
-        // 4-1. 레이아웃 표시: 가게 정보 컨테이너(가게 이름, 제휴 마크, 즐겨찾기 상태, 주소, 영업시간, 웹사이트 주소) 입력
-        setStoreInfoContainer(storeInfo)
-
-        // 4-2. 즐겨찾기 설정 동작
         favoriteButton.setOnClickListener {
             toggleFavorite(storeId, storeInfo)
         }
-
-        // 5. 레이아웃 표시: 제휴 정보 입력
-        setPartnership(storeInfo)
-
-        // 6. 레이아웃 표시: 메뉴 정보 입력
-        menuAdapter = MenuAdapter(storeInfo.menus)
-        menuList.adapter = menuAdapter
     }
 
     private fun setupViews() {
@@ -109,15 +120,6 @@ class StoreActivity : AppCompatActivity() {
         messageBox = findViewById(R.id.message_box)
         messageBoxYesButton = findViewById(R.id.message_box_yes_button)
         messageBoxNoButton = findViewById(R.id.message_box_no_button)
-    }
-
-    // 가게 이미지 세팅 함수
-    private fun setStoreInfoImage(currentStore: StoreInfo) {
-        if (currentStore.imageUrl != 0) {
-            storeImage.setImageResource(currentStore.imageUrl)
-        } else {
-            storeImage.setImageResource(R.drawable.default_image) // 기본 이미지 리소스 사용
-        }
     }
 
     // 가게 정보 컨테이너 세팅 함수

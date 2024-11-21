@@ -17,9 +17,11 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ssul.adapter.StoreAdapter
+import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
 
@@ -39,12 +41,15 @@ class HomeFragment : Fragment() {
     private lateinit var storeAdapter: StoreAdapter
     private lateinit var searchAdapter: StoreAdapter
     private lateinit var favoriteSharedPreferences: SharedPreferences
-    private lateinit var degreeSharedPreferences: SharedPreferences
 
     private var isSearchScreenOpen = false
     private var searchedStoreItems = mutableListOf<StoreItem>()
-    private var storeItems = mutableListOf<StoreItem>() // 전체 가게 리스트
+    private var storeItems: MutableList<StoreItem> = mutableListOf() // 전체 가게 리스트
     private val activeFilters = mutableSetOf<String>()
+
+    fun setStoreItems(items: MutableList<StoreItem>) {
+        storeItems = items
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -61,7 +66,7 @@ class HomeFragment : Fragment() {
 
         // 구현 사항
         // 1. 즐겨찾기, 학과 정보 상태 불러오기
-        // 2. 가게 전체 리스트 API 요청
+        // 2. 가게 전체 리스트 표시
         // 3. 메인 화면에서 텍스트 필드 클릭시 검색 화면으로 전환 -> 검색 결과 처리
         // 4. 필터 클릭 시 현재 불러온 데이터에서 일치하는 필터만 표시 -> 선택된 필터 색상 변경
         // 5. 어댑터 초기화 + 즐겨 찾기 처리 + 가게 클릭시 세부 화면으로 이동
@@ -69,14 +74,9 @@ class HomeFragment : Fragment() {
 
         // 1. 내부 저장소에서 즐겨찾기 상태 로드
         favoriteSharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
-        degreeSharedPreferences = requireContext().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
 
-
-        // 2. 가게 전체 리스트 API 요청
-        val college = degreeSharedPreferences.getString("selectedCollege", "")
-        val degree = degreeSharedPreferences.getString("selectedDepartment", "")
-        storeItems = getStores(college!!, degree!!)
-        storeItems.forEach { item ->
+        // 2. 가게 전체 리스트 표시
+        storeItems.forEach { item -> // 즐겨찾기 로드
             item.isFavorite = favoriteSharedPreferences.getBoolean(item.id.toString(), false)
         }
 
@@ -121,7 +121,7 @@ class HomeFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
-        // SharedPreferences를 다시 읽어들여서 데이터를 갱신
+        // 즐겨찾기 상태 갱신
         favoriteSharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
         storeItems.forEach { item ->
             item.isFavorite = favoriteSharedPreferences.getBoolean(item.id.toString(), false)
@@ -130,12 +130,8 @@ class HomeFragment : Fragment() {
             item.isFavorite = favoriteSharedPreferences.getBoolean(item.id.toString(), false)
         }
 
-        // 어댑터 갱신
-        storeAdapter.updateItems(storeItems)
-        searchAdapter.updateItems(searchedStoreItems)
-
-        // 필터 초기화
-        resetFilter()
+        // 어댑터 갱신 -> 필터 적용한 상태였으면 필터 상태 복구
+        applyFilters()
     }
 
     private fun setupViews(view: View) {
@@ -216,8 +212,6 @@ class HomeFragment : Fragment() {
 
         isSearchScreenOpen = false
 
-        // 전체 리스트 복원
-        storeAdapter.updateItems(storeItems)
     }
 
     // 검색 화면 표시 시에 뒤로 가기 버튼 클릭 로직
@@ -257,6 +251,7 @@ class HomeFragment : Fragment() {
                 }
             }
         }
+        applyFilters()
     }
 
     // 즐겨 찾기 상태 변경
@@ -339,17 +334,26 @@ class HomeFragment : Fragment() {
         return filteredItems
     }
 
-    // 필터 초기화
-    private fun resetFilter() {
-        groupFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
-        groupFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
-        dateFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
-        dateFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
-        efficiencyFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
-        efficiencyFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
-        partnerFilterButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.filter_non_clicked)
-        partnerFilterButton.setTextAppearance(requireContext(), R.style.filter_text_style)
-        activeFilters.clear()
+    // 필터 복구
+    private fun applyFilters() {
+        if (activeFilters.isEmpty()) {
+            // 필터가 없을 경우 전체 데이터를 표시
+            storeAdapter.updateItems(storeItems)
+        } else {
+            // 필터가 있을 경우 데이터를 필터링
+            val filteredItems = storeItems.filter { item ->
+                activeFilters.all { filter ->
+                    when (filter) {
+                        "group" -> item.isFilterGroupChecked
+                        "date" -> item.isFilterDateChecked
+                        "efficiency" -> item.isFilterEfficiencyChecked
+                        "partner" -> item.isAssociated
+                        else -> false
+                    }
+                }
+            }
+            storeAdapter.updateItems(filteredItems)
+        }
     }
 
     // 가게 세부 화면으로 이동

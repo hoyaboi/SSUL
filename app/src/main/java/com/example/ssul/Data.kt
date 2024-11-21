@@ -1,5 +1,11 @@
 package com.example.ssul
 
+import com.example.ssul.api.RetrofitClient
+import com.example.ssul.api.collegeCodeMap
+import com.example.ssul.api.degreeCodeMap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 data class StoreItem(
     val id: Int,                                // Store ID
     val name: String,                           // Store 이름
@@ -8,7 +14,7 @@ data class StoreItem(
     val isFilterGroupChecked: Boolean,          // group 필터 선택 여부
     val isFilterDateChecked: Boolean,           // date 필터 선택 여부
     val isFilterEfficiencyChecked: Boolean,     // efficiency 필터 선택 여부
-    var imageUrl: Int = 0,                      // Store 이미지 리소스 ID
+    var imageUrl: String = "",                  // Store 이미지 리소스 ID
     val isAssociated: Boolean                   // partner 필터 선택 여부
 )
 
@@ -26,102 +32,95 @@ data class StoreInfo(
     data class MenuItem(
         val name: String,                    // 메뉴 이름
         val price: String,                   // 메뉴 가격
-        val imageUrl: Int                    // 메뉴 이미지 리소스 ID
+        var imageUrl: String = ""            // 메뉴 이미지 리소스 ID
     )
 }
 
 // 가게 전체 리스트 API 요청 + MutableList<StoreItem> 형식으로 반환
-fun getStores(college: String, degree: String): MutableList<StoreItem> {
-    return mutableListOf(
-        StoreItem(
-            id = 1,
-            name = "블루힐",
-            address = "서울 동작구 사당로 14",
-            isFavorite = false,
-            isFilterGroupChecked = true,
-            isFilterDateChecked = false,
-            isFilterEfficiencyChecked = false,
-            imageUrl = R.drawable.sample_store1,
-            isAssociated = false
-        ),
-        StoreItem(
-            id = 2,
-            name = "스팅 (BAR)",
-            address = "서울 동작구 사당로 8 2층",
-            isFavorite = false,
-            isFilterGroupChecked = false,
-            isFilterDateChecked = true,
-            isFilterEfficiencyChecked = false,
-            imageUrl = R.drawable.sample_store2,
-            isAssociated = false
-        ),
-        StoreItem(
-            id = 3,
-            name = "파동추야",
-            address = "서울 동작구 상도로58번길",
-            isFavorite = false,
-            isFilterGroupChecked = true,
-            isFilterDateChecked = false,
-            isFilterEfficiencyChecked = true,
-            imageUrl = R.drawable.sample_store3,
-            isAssociated = true
-        ),
-        StoreItem(
-            id = 4,
-            name = "역전할머니맥주",
-            address = "서울 동작구 상도로61길 40",
-            isFavorite = false,
-            isFilterGroupChecked = false,
-            isFilterDateChecked = false,
-            isFilterEfficiencyChecked = true,
-            imageUrl = R.drawable.sample_store4,
-            isAssociated = true
-        )
-    )
+suspend fun getStores(college: String, degree: String): MutableList<StoreItem> {
+    return withContext(Dispatchers.IO) {
+        try {
+            // college와 degree를 코드로 변환
+            val collegeCode = collegeCodeMap[college] ?: throw IllegalArgumentException("Unknown college name: $college")
+            val degreeCode = degreeCodeMap[degree] ?: throw IllegalArgumentException("Unknown degree name: $degree")
+
+            // API 요청
+            val response = RetrofitClient.apiService.getStores(collegeCode, degreeCode).execute()
+            if (response.isSuccessful) {
+                val storeResponses = response.body() ?: emptyList()
+
+                // StoreItem으로 변환
+                storeResponses.map { storeResponse ->
+                    StoreItem(
+                        id = storeResponse.id,
+                        name = storeResponse.name,
+                        address = storeResponse.address,
+                        isFavorite = false, // 초기값 설정
+                        isFilterGroupChecked = storeResponse.themes.contains("THE-001"),
+                        isFilterDateChecked = storeResponse.themes.contains("THE-002"),
+                        isFilterEfficiencyChecked = storeResponse.themes.contains("THE-003"),
+                        imageUrl = storeResponse.imageUrl,
+                        isAssociated = storeResponse.isAssociated
+                    )
+                }.toMutableList()
+            } else {
+                mutableListOf()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            mutableListOf()
+        }
+    }
 }
 
-// 가게 상세 정보 API 요청 + StoreInfo 형식으로 반환
-fun getStoreInfo(storeId: Int, college: String, degree: String): StoreInfo {
-    return StoreInfo(
-        id = 1,
-        imageUrl = R.drawable.sample_store3,
-        name = "파동추야",
-        isAssociated = true,
-        isFavorite = false,
-        address = "서울 동작구 상도로58번길",
-        contact = "02-123-4567",
-        associationInfo = "IT대학" to "모든 안주 무료",
-        menus = listOf(
-            StoreInfo.MenuItem(
-                name = "메뉴 1",
-                price = "500원",
-                imageUrl = R.mipmap.ic_launcher
-            ),
-            StoreInfo.MenuItem(
-                name = "메뉴 2",
-                price = "500원",
-                imageUrl = R.mipmap.ic_launcher
-            ),
-            StoreInfo.MenuItem(
-                name = "메뉴 3",
-                price = "500원",
-                imageUrl = R.mipmap.ic_launcher
-            ),
-            StoreInfo.MenuItem(
-                name = "메뉴 4",
-                price = "500원",
-                imageUrl = R.mipmap.ic_launcher
-            ),
-            StoreInfo.MenuItem(
-                name = "메뉴 5",
-                price = "500원",
-                imageUrl = R.mipmap.ic_launcher
-            ),
-            StoreInfo.MenuItem(
-                name = "메뉴 6",
-                price = "500원",
-                imageUrl = R.mipmap.ic_launcher
+// 가게 세부 사항 API 요청 + StoreInfo 형식으로 반환
+suspend fun getStoreInfo(storeId: Int, college: String, degree: String): StoreInfo {
+    return withContext(Dispatchers.IO) {
+        try {
+            // college와 degree를 코드로 변환
+            val collegeCode = collegeCodeMap[college] ?: throw IllegalArgumentException("Unknown college name: $college")
+            val degreeCode = degreeCodeMap[degree] ?: throw IllegalArgumentException("Unknown degree name: $degree")
+
+            // API 요청
+            val response = RetrofitClient.apiService.getStoreInfo(storeId, collegeCode, degreeCode).execute()
+            if (response.isSuccessful) {
+                val storeResponse = response.body() ?: throw IllegalArgumentException("Invalid Store Response")
+
+                // AssociationInfo의 target을 학과/단과대학 이름으로 변환
+                val associationTarget = collegeCodeMap.entries.find { it.value == storeResponse.associationInfo?.target }?.key
+                    ?: degreeCodeMap.entries.find { it.value == storeResponse.associationInfo?.target }?.key
+                    ?: "정보 없음"
+
+                // StoreInfo로 변환
+                StoreInfo(
+                    id = storeResponse.id,
+                    name = storeResponse.name,
+                    isAssociated = storeResponse.isAssociated,
+                    address = storeResponse.address,
+                    contact = storeResponse.contact ?: "정보 없음",
+                    associationInfo = associationTarget to (storeResponse.associationInfo?.description ?: "정보 없음"),
+                    menus = storeResponse.menus.map { menu ->
+                        StoreInfo.MenuItem(
+                            name = menu.name,
+                            price = menu.price,
+                            imageUrl = menu.imageUrl ?: ""
+                        )
+                    }
+                )
+            } else {
+                throw IllegalArgumentException("Failed to fetch store info: ${response.errorBody()?.string()}")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            StoreInfo(
+                id = 0,
+                name = "알 수 없음",
+                isAssociated = false,
+                address = "정보 없음",
+                contact = "정보 없음",
+                associationInfo = "정보 없음" to "정보 없음",
+                menus = emptyList()
             )
-        )
-    )
+        }
+    }
 }

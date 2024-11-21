@@ -6,14 +6,16 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.example.ssul.FavoritesFragment
 import com.example.ssul.HomeFragment
 import com.example.ssul.MapFragment
+import com.example.ssul.StoreItem
 
-class TabAdapter(fragmentActivity: FragmentActivity) : FragmentStateAdapter(fragmentActivity) {
+class TabAdapter(fragmentActivity: FragmentActivity, private val storeItems: MutableList<StoreItem>) :
+    FragmentStateAdapter(fragmentActivity) {
 
     private val fragmentCache = mutableMapOf<Int, Fragment>() // Fragment 캐시
 
     private val fragmentCreators: Map<Int, () -> Fragment> = mapOf(
-        0 to { FavoritesFragment() },
-        1 to { HomeFragment() },
+        0 to { FavoritesFragment().also { it.setStoreItems(storeItems) } },
+        1 to { HomeFragment().also { it.setStoreItems(storeItems) } },
         2 to { MapFragment() }
     )
 

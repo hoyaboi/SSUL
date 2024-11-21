@@ -1,5 +1,7 @@
 package com.example.ssul
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,10 +11,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
 import com.example.ssul.adapter.TabAdapter
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -22,6 +26,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var messageBoxNoButton: TextView
     private lateinit var tabLayout: TabLayout
     private lateinit var viewPager: ViewPager2
+
+    private var storeItems: MutableList<StoreItem> = mutableListOf()
+    private lateinit var favoriteSharedPreferences: SharedPreferences
+    private lateinit var degreeSharedPreferences: SharedPreferences
 
     private var backPressedTime: Long = 0
 
@@ -33,17 +41,22 @@ class MainActivity : AppCompatActivity() {
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
 
         setupViews()
-        viewPager.adapter = TabAdapter(this)
-        viewPager.isUserInputEnabled = false
-        viewPager.setCurrentItem(1, false) // 메인 화면 설정(홈)
 
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-            when (position) {
-                0 -> tab.customView = createTabView("즐겨찾기", R.drawable.ic_favorites)
-                1 -> tab.customView = createTabView("홈", R.drawable.ic_home)
-                2 -> tab.customView = createTabView("지도", R.drawable.ic_map)
+        favoriteSharedPreferences = getSharedPreferences("favorite", Context.MODE_PRIVATE)
+        degreeSharedPreferences = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+
+        // 가게 정보 API 요청 -> 즐쳐찾기, 홈 프레그먼트로 전달
+        val college = degreeSharedPreferences.getString("selectedCollege", "")
+        val degree = degreeSharedPreferences.getString("selectedDepartment", "")
+        lifecycleScope.launch {
+            storeItems = getStores(college!!, degree!!)
+            storeItems.forEach { item ->
+                item.isFavorite = favoriteSharedPreferences.getBoolean(item.id.toString(), false)
             }
-        }.attach()
+
+            setupViewPagerAndTabs()
+        }
+
 
         // 메시지 박스 표시된 경우 메시지 박스 컨테이너 외에는 터치가 안 되게 설정
         messageBox.setOnClickListener {}
@@ -70,6 +83,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupViewPagerAndTabs() {
+        viewPager.adapter = TabAdapter(this, storeItems)
+        viewPager.isUserInputEnabled = false
+        viewPager.setCurrentItem(1, false) // 메인 화면 설정(홈)
+
+        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+            when (position) {
+                0 -> tab.customView = createTabView("즐겨찾기", R.drawable.ic_favorites)
+                1 -> tab.customView = createTabView("홈", R.drawable.ic_home)
+                2 -> tab.customView = createTabView("지도", R.drawable.ic_map)
+            }
+        }.attach()
+    }
+
     private fun setupViews() {
         messageBox = findViewById(R.id.message_box)
         messageBoxTextView = findViewById(R.id.message_box_text)
@@ -88,11 +115,6 @@ class MainActivity : AppCompatActivity() {
         tabIcon.setImageResource(icon)
         tabText.text = title
         return view
-    }
-
-    // 프래그먼트 갱신 메서드
-    fun refreshFragment(position: Int) {
-        viewPager.adapter?.notifyItemChanged(position)
     }
 
     fun showMessageBox(message: String, onYesClicked: () -> Unit) {

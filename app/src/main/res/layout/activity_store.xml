@@ -26,7 +26,7 @@
                 app:layout_constraintBottom_toTopOf="@+id/store_name_container"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:src="@mipmap/ic_launcher"
+                android:src="@drawable/default_image"
                 android:scaleType="centerCrop"/>
 
             <ImageView
@@ -87,7 +87,7 @@
                         android:layout_gravity="center_vertical"
                         android:paddingTop="9dp"
                         android:paddingBottom="3dp"
-                        android:src="@drawable/favorite_clicked"/>
+                        android:src="@drawable/favorite_non_clicked"/>
 
                 </LinearLayout>
 
