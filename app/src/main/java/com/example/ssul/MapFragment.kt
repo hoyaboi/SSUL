@@ -26,6 +26,10 @@ import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.OverlayImage
 import com.naver.maps.map.overlay.PolylineOverlay
 import com.naver.maps.map.util.FusedLocationSource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -148,40 +152,51 @@ class MapFragment : Fragment() {
         clearExistingMarkers() // 기존 마커 제거
 
         storeList.forEach { store ->
-            val coordinates = getCoordinatesFromAddress(store.address) // 캐싱된 좌표 가져오기
-            coordinates?.let {
-                val marker = Marker().apply {
-                    position = it
-                    map = naverMap
-                    captionText = store.name
-                    icon = OverlayImage.fromResource(R.drawable.ic_store)
-                    captionColor = Color.rgb(0xAF, 0x8E, 0xFF)
+            GlobalScope.launch(Dispatchers.IO) { // 비동기로 실행
+                try {
+                    val coordinates = getCoordinatesFromAddress(store.address) // 좌표 변환
+                    if (coordinates != null) {
+                        withContext(Dispatchers.Main) { // UI 작업은 메인 스레드에서 처리
+                            val marker = Marker().apply {
+                                position = coordinates
+                                map = naverMap
+                                captionText = store.name
+                                icon = OverlayImage.fromResource(R.drawable.ic_store)
+                                captionColor = Color.rgb(0xAF, 0x8E, 0xFF)
 
-                    setOnClickListener {
-                        handleMarkerClick(this, store) // 마커 클릭 이벤트 처리
-                        true
+                                setOnClickListener {
+                                    handleMarkerClick(this, store)
+                                    true
+                                }
+                            }
+                            markerList.add(marker)
+                        }
                     }
+                } catch (e: IOException) {
+                    e.printStackTrace()
                 }
-                markerList.add(marker) // 마커를 리스트에 추가
             }
         }
     }
 
     // 주소를 좌표로 변환하는 메서드 (캐시 적용)
     private fun getCoordinatesFromAddress(address: String): LatLng? {
-        return geocodingCache[address] ?: run { // 캐시에 값이 없을 경우만 Geocoder 호출
-            try {
-                val addresses = Geocoder(requireContext()).getFromLocationName(address, 1)
-                if (!addresses.isNullOrEmpty()) {
-                    val location = addresses[0]
-                    val latLng = LatLng(location.latitude, location.longitude)
-                    geocodingCache[address] = latLng // 결과를 캐시에 저장
-                    latLng
-                } else null
-            } catch (e: IOException) {
-                e.printStackTrace()
-                null
-            }
+        // 캐시된 값이 있으면 바로 반환
+        geocodingCache[address]?.let { return it }
+
+        // 캐시된 값이 없으면 Geocoder를 사용하여 좌표 변환
+        return try {
+            val addresses = Geocoder(requireContext()).getFromLocationName(address, 1)
+            if (!addresses.isNullOrEmpty()) {
+                val location = addresses[0]
+                val latLng = LatLng(location.latitude, location.longitude)
+                // 좌표를 캐시에 저장
+                geocodingCache[address] = latLng
+                latLng
+            } else null
+        } catch (e: IOException) {
+            e.printStackTrace()
+            null
         }
     }
 
