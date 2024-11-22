@@ -16,7 +16,7 @@ class TabAdapter(fragmentActivity: FragmentActivity, private val storeItems: Mut
     private val fragmentCreators: Map<Int, () -> Fragment> = mapOf(
         0 to { FavoritesFragment().also { it.setStoreItems(storeItems) } },
         1 to { HomeFragment().also { it.setStoreItems(storeItems) } },
-        2 to { MapFragment() }
+        2 to { MapFragment().also { it.setStoreItems(storeItems) }  }
     )
 
     override fun createFragment(position: Int): Fragment {

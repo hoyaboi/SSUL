@@ -3,19 +3,23 @@ package com.example.ssul
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.example.ssul.model.TestModel
+import com.bumptech.glide.Glide
 import com.naver.maps.geometry.LatLng
+import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.LocationTrackingMode
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.overlay.Marker
@@ -39,7 +43,12 @@ class MapFragment : Fragment() {
 
     private var selectedMarker: Marker? = null // 선택된 마커 저장
     private var storeInfoPopup: View? = null // 팝업 뷰 참조
+    private var storeItems: MutableList<StoreItem> = mutableListOf() // 전체 가게 리스트
+    fun setStoreItems(items: MutableList<StoreItem>) {
+        storeItems = items
+    }
 
+    private val geocodingCache = mutableMapOf<String, LatLng>() // 주소-좌표 캐시
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -53,6 +62,7 @@ class MapFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupTagFilters(view) //태그버튼 초기화
+        setupSearchFunctionality(view) // 검색창 초기화
 
         // 위치 소스 초기화
         locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
@@ -72,87 +82,110 @@ class MapFragment : Fragment() {
             // UI 설정 (현재 위치 버튼 등)
             naverMap.uiSettings.isLocationButtonEnabled = true
             setupMapClickListener() // 지도 클릭 이벤트 초기화
+            updateMarkers(storeItems)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        storeInfoPopup?.let { popupView ->
+            val favoriteButton = popupView.findViewById<ImageView>(R.id.favorite_button)
+            val storeName = popupView.findViewById<TextView>(R.id.store_name)?.text?.toString()
+
+            storeName?.let { name ->
+                // SharedPreferences에서 즐겨찾기 상태 재확인
+                val sharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
+                val isFavorite = sharedPreferences.getBoolean(name, false)
+
+                // 버튼 상태 업데이트
+                updateFavoriteButtonState(favoriteButton, isFavorite)
+            }
+        }
+
     }
 
     private fun setupTagFilters(view: View) {
-        val tagButtons = listOf(
-            R.id.filter_group_button to listOf(
-                TestModel("씨밤", 37.49465, 126.9564),
-                TestModel("젠", 37.49465, 126.9566230)
-            ),
-            R.id.filter_date_button to listOf(
-                TestModel("블루힐", 37.49467, 126.9564230)
-            ),
-            R.id.filter_efficiency_button to listOf(
-                TestModel("젠", 37.49465, 126.9566230),
-                TestModel("블루힐", 37.49467, 126.9564230)
-            ),
-            R.id.filter_partner_button to listOf(
-                TestModel("씨밤", 37.49465, 126.9564),
-                TestModel("블루힐", 37.49467, 126.9564230)
-            )
+        // 각 필터 버튼과 관련된 데이터를 매핑
+        val tagFilters = mapOf(
+            R.id.filter_group_button to { store: StoreItem -> store.isFilterGroupChecked },
+            R.id.filter_date_button to { store: StoreItem -> store.isFilterDateChecked },
+            R.id.filter_efficiency_button to { store: StoreItem -> store.isFilterEfficiencyChecked },
+            R.id.filter_partner_button to { store: StoreItem -> store.isAssociated }
         )
 
-        var activeButtonId: Int? = null
+        // 현재 활성화된 필터 상태를 저장하는 Set
+        val activeFilters = mutableSetOf<Int>()
 
-        for ((buttonId, storeList) in tagButtons) {
+        for ((buttonId, filterCondition) in tagFilters) {
             val button = view.findViewById<TextView>(buttonId)
             button.setOnClickListener {
-                if (activeButtonId == buttonId) {
-                    // 동일 버튼을 다시 눌렀을 경우 상태 초기화
+                if (activeFilters.contains(buttonId)) {
+                    // 이미 활성화된 필터를 비활성화
+                    activeFilters.remove(buttonId)
                     button.setBackgroundResource(R.drawable.filter_non_clicked)
                     button.setTextAppearance(requireContext(), R.style.filter_text_style)
-                    activeButtonId = null
-                    clearExistingMarkers()
                 } else {
-                    // 이전 활성 버튼 초기화
-                    activeButtonId?.let { prevButtonId ->
-                        view.findViewById<TextView>(prevButtonId).apply {
-                            setBackgroundResource(R.drawable.filter_non_clicked) // 배경 복구
-                            setTextAppearance(
-                                requireContext(),
-                                R.style.filter_text_style
-                            ) // 텍스트 스타일 복구
-                        }
-                    }
-
-                    // 새로 활성화된 버튼 상태 설정
-                    button.setBackgroundResource(R.drawable.filter_clicked) // 새로운 배경
-                    button.setTextAppearance(
-                        requireContext(),
-                        R.style.filter_selected_text_style
-                    ) // 새로운 텍스트 스타일
-                    activeButtonId = buttonId
-
-                    // 마커 업데이트
-                    updateMarkers(storeList)
+                    // 새로운 필터를 활성화
+                    activeFilters.add(buttonId)
+                    button.setBackgroundResource(R.drawable.filter_clicked)
+                    button.setTextAppearance(requireContext(), R.style.filter_selected_text_style)
                 }
+
+                // 활성화된 모든 필터 조건을 적용하여 데이터를 필터링
+                val filteredStores = storeItems.filter { store ->
+                    activeFilters.all { filterId ->
+                        tagFilters[filterId]?.invoke(store) ?: true
+                    }
+                }
+
+                // 마커 업데이트
+                updateMarkers(filteredStores)
             }
         }
     }
 
-    private fun updateMarkers(storeList: List<TestModel>) {
+    private fun updateMarkers(storeList: List<StoreItem>) {
         clearExistingMarkers() // 기존 마커 제거
 
         storeList.forEach { store ->
-            val marker = Marker().apply {
-                position = LatLng(store.latitude, store.longitude)
-                map = naverMap
-                captionText = store.name
-                icon = OverlayImage.fromResource(R.drawable.ic_store)
-                captionColor = Color.rgb(0xAF, 0x8E, 0xFF)
+            val coordinates = getCoordinatesFromAddress(store.address) // 캐싱된 좌표 가져오기
+            coordinates?.let {
+                val marker = Marker().apply {
+                    position = it
+                    map = naverMap
+                    captionText = store.name
+                    icon = OverlayImage.fromResource(R.drawable.ic_store)
+                    captionColor = Color.rgb(0xAF, 0x8E, 0xFF)
 
-                setOnClickListener {
-                    handleMarkerClick(this, store) // 마커 클릭 이벤트 처리
-                    true
+                    setOnClickListener {
+                        handleMarkerClick(this, store) // 마커 클릭 이벤트 처리
+                        true
+                    }
                 }
+                markerList.add(marker) // 마커를 리스트에 추가
             }
-            markerList.add(marker)
         }
     }
 
-    private fun handleMarkerClick(marker: Marker, store: TestModel) {
+    // 주소를 좌표로 변환하는 메서드 (캐시 적용)
+    private fun getCoordinatesFromAddress(address: String): LatLng? {
+        return geocodingCache[address] ?: run { // 캐시에 값이 없을 경우만 Geocoder 호출
+            try {
+                val addresses = Geocoder(requireContext()).getFromLocationName(address, 1)
+                if (!addresses.isNullOrEmpty()) {
+                    val location = addresses[0]
+                    val latLng = LatLng(location.latitude, location.longitude)
+                    geocodingCache[address] = latLng // 결과를 캐시에 저장
+                    latLng
+                } else null
+            } catch (e: IOException) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+
+    private fun handleMarkerClick(marker: Marker, store: StoreItem) {
         // 이전 선택된 마커 복구
         selectedMarker?.let {
             it.icon = OverlayImage.fromResource(R.drawable.ic_store) // 기본 아이콘 복구
@@ -170,7 +203,7 @@ class MapFragment : Fragment() {
     }
 
     // 팝업 표시
-    private fun showStoreInfoPopup(store: TestModel) {
+    private fun showStoreInfoPopup(store: StoreItem) {
         // 기존 팝업 제거
         storeInfoPopup?.let {
             (it.parent as? ViewGroup)?.removeView(it)
@@ -182,35 +215,41 @@ class MapFragment : Fragment() {
             val storeName = findViewById<TextView>(R.id.store_name)
             val storeAddress = findViewById<TextView>(R.id.store_address)
             val favoriteButton = findViewById<ImageView>(R.id.favorite_button)
+            val storeImage = findViewById<ImageView>(R.id.store_image)
 
             storeName.text = store.name
-            storeAddress.text = "주소: ${store.latitude}, ${store.longitude}"
+            storeAddress.text = "주소: ${store.address}"
+            Glide.with(this)
+                .load(store.imageUrl) // 이미지 URL
+                .placeholder(R.drawable.default_image) // 로딩 중 보여줄 이미지
+                .error(R.drawable.default_image) // 오류 시 보여줄 이미지
+                .into(storeImage) // ImageView에 이미지 적용
 
             // SharedPreferences에서 즐겨찾기 상태 로드
             val sharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
-            val isFavorite = sharedPreferences.getBoolean(store.name, false)
+            val isFavorite = sharedPreferences.getBoolean(store.id.toString(), false)
 
             // 초기 즐겨찾기 버튼 상태 설정
             updateFavoriteButtonState(favoriteButton, isFavorite)
 
             // 즐겨찾기 버튼 클릭 리스너
             favoriteButton.setOnClickListener {
-                val currentFavoriteState = sharedPreferences.getBoolean(store.name, false)
+                val sharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
+                val isFavorite = sharedPreferences.getBoolean(store.id.toString(), false) // 현재 즐겨찾기 상태 확인
 
-                if (currentFavoriteState) {
-                    // 이미 즐겨찾기인 경우 제거 여부 확인
+                if (isFavorite) {
+                    // 이미 즐겨찾기 상태 -> 제거 작업
                     (activity as? MainActivity)?.showMessageBox(
                         message = getString(R.string.remove_favorite),
                         onYesClicked = {
-                            // 즐겨찾기 제거
-                            sharedPreferences.edit().putBoolean("1", false).apply()
-                            updateFavoriteButtonState(favoriteButton, false)
+                            sharedPreferences.edit().remove(store.id.toString()).apply() // 즐겨찾기 상태 제거
+                            updateFavoriteButtonState(favoriteButton, false) // 버튼 상태 업데이트
                         }
                     )
                 } else {
                     // 즐겨찾기 추가
-                    sharedPreferences.edit().putBoolean("1", true).apply()
-                    updateFavoriteButtonState(favoriteButton, true)
+                    sharedPreferences.edit().putBoolean(store.id.toString(), true).apply() // 상태 저장
+                    updateFavoriteButtonState(favoriteButton, true) // 버튼 상태 업데이트
                 }
             }
         }
@@ -232,8 +271,8 @@ class MapFragment : Fragment() {
         // 팝업 클릭 시 StoreActivity로 이동
         popupView.setOnClickListener {
             val intent = Intent(requireContext(), StoreActivity::class.java).apply {
-                putExtra("store_name", store.name)
-                putExtra("store_address", "${store.latitude}, ${store.longitude}")
+                putExtra("storeId", store.id)
+                putExtra("storeImage", store.imageUrl)
             }
             startActivity(intent)
         }
@@ -250,16 +289,25 @@ class MapFragment : Fragment() {
     // 지도 클릭 시 팝업 제거 및 마커 복구
     private fun setupMapClickListener() {
         naverMap.setOnMapClickListener { _, _ ->
-            // 팝업 제거
+            // Restore all markers
+            updateMarkers(storeItems)
+
+            // Existing popup and marker reset logic
             storeInfoPopup?.let {
                 (it.parent as? ViewGroup)?.removeView(it)
                 storeInfoPopup = null
             }
 
-            // 선택된 마커 초기화
             selectedMarker?.let {
                 it.icon = OverlayImage.fromResource(R.drawable.ic_store)
                 selectedMarker = null
+            }
+
+            // Reset search field
+            view?.findViewById<EditText>(R.id.search_store_textfield)?.apply {
+                setText("")
+                visibility = View.GONE
+                view?.findViewById<TextView>(R.id.search_text)?.visibility = View.VISIBLE
             }
         }
     }
@@ -287,7 +335,6 @@ class MapFragment : Fragment() {
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1000
     }
-
 
     //경로 받아오기
     private fun fetchRoute(currentLocation: LatLng, destination: LatLng) {
@@ -348,21 +395,60 @@ class MapFragment : Fragment() {
         }
     }
 
+    private fun setupSearchFunctionality(view: View) {
+        val searchTextField = view.findViewById<EditText>(R.id.search_store_textfield)
+        val searchButton = view.findViewById<ImageView>(R.id.search_button)
+        val searchText = view.findViewById<TextView>(R.id.search_text)
 
-    //주소 좌표로 바꾸는 지오코드 메소드(아직 사용안함)
-    private fun convertAddressToCoordinates(address: String) {
-        val geocoder = context?.let { Geocoder(it) }
-        try {
-            val addresses: MutableList<Address>? = geocoder?.getFromLocationName(address, 1)
-
-            if (addresses!!.isNotEmpty()) {
-                val location: Address = addresses[0]
-                val latitude = location.latitude
-                val longitude = location.longitude
-            } else {
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
+        // Toggle search input visibility
+        searchText.setOnClickListener {
+            searchText.visibility = View.GONE
+            searchTextField.visibility = View.VISIBLE
+            searchTextField.requestFocus()
         }
+
+        // Search button click listener
+        searchButton.setOnClickListener {
+            performSearch(searchTextField.text.toString())
+        }
+
+        // Handle search action on soft keyboard
+        searchTextField.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                performSearch(searchTextField.text.toString())
+                true
+            } else false
+        }
+    }
+
+    private fun performSearch(query: String) {
+        if (query.isEmpty()) return
+
+        // Filter stores by name containing the query (case-insensitive)
+        val filteredStores = storeItems.filter {
+            it.name.contains(query, ignoreCase = true)
+        }
+
+        if (filteredStores.isNotEmpty()) {
+            // Update markers with filtered stores
+            updateMarkers(filteredStores)
+
+            // Automatically select and show info for the first matching store
+            val firstStore = filteredStores.first()
+            val firstMarker = markerList.find { it.captionText == firstStore.name }
+
+            firstMarker?.let { marker ->
+                handleMarkerClick(marker, firstStore)
+
+                // Center map on the first store's location
+                naverMap.moveCamera(CameraUpdate.scrollTo(marker.position))
+            }
+        } else {
+            Toast.makeText(context,"$query(은)는 존재하지 않는 술집입니다.", Toast.LENGTH_LONG).show()
+        }
+
+        // Hide keyboard after search
+        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(view?.windowToken, 0)
     }
 }
