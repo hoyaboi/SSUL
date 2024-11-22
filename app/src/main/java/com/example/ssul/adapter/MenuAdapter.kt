@@ -29,8 +29,8 @@ class MenuAdapter(private val menuList: List<StoreInfo.MenuItem>) :
         val menuItem = menuList[position]
         Glide.with(holder.menuImage.context)
             .load(menuItem.imageUrl)
-            .placeholder(R.drawable.default_image)
-            .error(R.drawable.default_image)
+            .placeholder(R.drawable.default_menu)
+            .error(R.drawable.default_menu)
             .into(holder.menuImage)
         holder.menuText.text = menuItem.name
         holder.priceText.text = menuItem.price

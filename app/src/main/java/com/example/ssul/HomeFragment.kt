@@ -354,6 +354,7 @@ class HomeFragment : Fragment() {
             }
             storeAdapter.updateItems(filteredItems)
         }
+        searchAdapter.updateItems(searchedStoreItems)
     }
 
     // 가게 세부 화면으로 이동
