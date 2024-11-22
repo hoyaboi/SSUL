@@ -203,7 +203,9 @@ class HomeFragment : Fragment() {
         storeList.visibility = View.VISIBLE
         searchList.visibility = View.GONE
 
+        // 검색창 포커스 제거
         searchEditText.clearFocus()
+
         searchEditText.setText("")
 
         // 키보드 숨기기
