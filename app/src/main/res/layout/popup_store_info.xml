@@ -3,7 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="10dp"
     app:cardCornerRadius="12dp"
     app:cardElevation="8dp">
 
@@ -12,15 +11,15 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
         android:background="@drawable/popup_background">
 
         <androidx.cardview.widget.CardView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
             app:cardCornerRadius="7dp"
             app:cardElevation="0dp"
             android:clipChildren="true"
@@ -80,7 +79,7 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="5dp"
                 android:orientation="horizontal">
 
                 <ImageView

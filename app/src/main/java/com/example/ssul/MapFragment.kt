@@ -279,7 +279,7 @@ class MapFragment : Fragment() {
             FrameLayout.LayoutParams.WRAP_CONTENT
         ).apply {
             // 하단 네비게이션 바 위로 팝업을 배치
-            setMargins(20, 0, 20, bottomMargin + 50)
+            setMargins(dpToPx(24), 0, dpToPx(24), dpToPx(35))
             gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
         }
 
@@ -468,4 +468,10 @@ class MapFragment : Fragment() {
             Toast.makeText(context,"$query(은)는 존재하지 않는 술집입니다.", Toast.LENGTH_LONG).show()
         }
     }
+
+    // dp 값을 px 값으로 변환
+    private fun dpToPx(dp: Int): Int {
+        return (dp * resources.displayMetrics.density).toInt()
+    }
 }
+
