@@ -94,18 +94,16 @@ class MapFragment : Fragment() {
         super.onResume()
         storeInfoPopup?.let { popupView ->
             val favoriteButton = popupView.findViewById<ImageView>(R.id.favorite_button)
-            val storeName = popupView.findViewById<TextView>(R.id.store_name)?.text?.toString()
+            val storeId = popupView.tag as? Int // 팝업에 저장된 가게 ID 가져오기
 
-            storeName?.let { name ->
-                // SharedPreferences에서 즐겨찾기 상태 재확인
+            storeId?.let { id ->
                 val sharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
-                val isFavorite = sharedPreferences.getBoolean(name, false)
+                val isFavorite = sharedPreferences.getBoolean(id.toString(), false)
 
-                // 버튼 상태 업데이트
+                // 버튼 상태 갱신
                 updateFavoriteButtonState(favoriteButton, isFavorite)
             }
         }
-
     }
 
     private fun setupTagFilters(view: View) {
@@ -231,6 +229,7 @@ class MapFragment : Fragment() {
             val storeAddress = findViewById<TextView>(R.id.store_address)
             val favoriteButton = findViewById<ImageView>(R.id.favorite_button)
             val storeImage = findViewById<ImageView>(R.id.store_image)
+            val partnerTag = findViewById<ImageView>(R.id.partner_status)
 
             storeName.text = store.name
             storeAddress.text = "주소: ${store.address}"
@@ -239,6 +238,9 @@ class MapFragment : Fragment() {
                 .placeholder(R.drawable.default_image) // 로딩 중 보여줄 이미지
                 .error(R.drawable.default_image) // 오류 시 보여줄 이미지
                 .into(storeImage) // ImageView에 이미지 적용
+
+            // 제휴 상태에 따라 partnerTag visibility 설정
+            partnerTag.visibility = if (store.isAssociated) View.VISIBLE else View.INVISIBLE
 
             // SharedPreferences에서 즐겨찾기 상태 로드
             val sharedPreferences = requireContext().getSharedPreferences("favorite", Context.MODE_PRIVATE)
@@ -269,13 +271,15 @@ class MapFragment : Fragment() {
             }
         }
 
+        popupView.tag = store.id // 가게 ID를 태그로 설정
+
         // 팝업의 위치와 크기를 조정하여 추가
         val layoutParams = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT,
             FrameLayout.LayoutParams.WRAP_CONTENT
         ).apply {
-            // 위치 조정 (마커의 아래쪽에 표시)
-            setMargins(20, 50, 20, 20)
+            // 하단 네비게이션 바 위로 팝업을 배치
+            setMargins(20, 0, 20, bottomMargin + 50)
             gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
         }
 
@@ -420,17 +424,23 @@ class MapFragment : Fragment() {
             searchText.visibility = View.GONE
             searchTextField.visibility = View.VISIBLE
             searchTextField.requestFocus()
+
+            //키보드 표시
+            val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showSoftInput(searchTextField, InputMethodManager.SHOW_IMPLICIT)
         }
 
-        // Search button click listener
         searchButton.setOnClickListener {
             performSearch(searchTextField.text.toString())
         }
 
-        // Handle search action on soft keyboard
         searchTextField.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 performSearch(searchTextField.text.toString())
+
+                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(view?.windowToken, 0)
+                searchTextField.clearFocus() // 검색창 포커스 해제
                 true
             } else false
         }
@@ -439,31 +449,23 @@ class MapFragment : Fragment() {
     private fun performSearch(query: String) {
         if (query.isEmpty()) return
 
-        // Filter stores by name containing the query (case-insensitive)
+        //필터링 로직
         val filteredStores = storeItems.filter {
             it.name.contains(query, ignoreCase = true)
         }
 
         if (filteredStores.isNotEmpty()) {
-            // Update markers with filtered stores
             updateMarkers(filteredStores)
 
-            // Automatically select and show info for the first matching store
             val firstStore = filteredStores.first()
             val firstMarker = markerList.find { it.captionText == firstStore.name }
 
             firstMarker?.let { marker ->
                 handleMarkerClick(marker, firstStore)
-
-                // Center map on the first store's location
                 naverMap.moveCamera(CameraUpdate.scrollTo(marker.position))
             }
         } else {
             Toast.makeText(context,"$query(은)는 존재하지 않는 술집입니다.", Toast.LENGTH_LONG).show()
         }
-
-        // Hide keyboard after search
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(view?.windowToken, 0)
     }
 }
