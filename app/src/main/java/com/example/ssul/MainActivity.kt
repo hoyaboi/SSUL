@@ -68,11 +68,11 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // 홈 화면(HomeFragment)에서의 뒤로가기 클릭 처리
-        val currentFragment = (viewPager.adapter as? TabAdapter)?.getFragment(viewPager.currentItem)
-        if (currentFragment is HomeFragment && currentFragment.handleBackPressed()) {
-            return
-        }
+//        // 홈 화면(HomeFragment)에서의 뒤로가기 클릭 처리
+//        val currentFragment = (viewPager.adapter as? TabAdapter)?.getFragment(viewPager.currentItem)
+//        if (currentFragment is HomeFragment && currentFragment.handleBackPressed()) {
+//            return
+//        }
 
         // 기본 뒤로가기 클릭 처리 (앱 종료)
         if (System.currentTimeMillis() - backPressedTime < 2000) {
@@ -84,7 +84,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupViewPagerAndTabs() {
-        viewPager.adapter = TabAdapter(this, storeItems)
+//        viewPager.adapter = TabAdapter(this, storeItems)
+        viewPager.adapter = TabAdapter(this)
         viewPager.isUserInputEnabled = false
         viewPager.setCurrentItem(1, false) // 메인 화면 설정(홈)
 
