@@ -8,9 +8,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.ssul.R
-import com.example.ssul.StoreInfo
+import com.example.ssul.model.StoreInfoModel
 
-class MenuAdapter(private val menuList: List<StoreInfo.MenuItem>) :
+class MenuAdapter(private val menuList: List<StoreInfoModel.MenuItem>) :
     RecyclerView.Adapter<MenuAdapter.MenuViewHolder>() {
 
     inner class MenuViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

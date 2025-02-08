@@ -32,7 +32,7 @@ class FavoriteViewModel(application: Application) : AndroidViewModel(application
     fun toggleFavorite(storeId: Int) {
         val currentList = _favoriteState.value?.toMutableList() ?: mutableListOf()
 
-        val selectedItem = currentList.find { it.storeId == storeId }
+        val selectedItem: FavoriteModel? = currentList.find { it.storeId == storeId }
         if (selectedItem != null) {
             selectedItem.isFavorite = !selectedItem.isFavorite
         } else {
