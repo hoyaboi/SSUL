@@ -20,7 +20,6 @@ class StoreViewModel(application: Application) : AndroidViewModel(application) {
     private val _allStores = MutableLiveData<MutableList<StoreModel>>()
     private val _filteredStores = MutableLiveData<MutableList<StoreModel>>()
     val storeItems: LiveData<MutableList<StoreModel>> get() = _filteredStores
-    // FavoriteFragment 위해 즐겨찾기 아이템 추가? var favStoreItems
 
     private val _storeInfo = MutableLiveData<StoreInfoModel>()
     val storeInfo: LiveData<StoreInfoModel> get() = _storeInfo

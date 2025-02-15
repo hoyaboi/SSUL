@@ -431,7 +431,7 @@ class HomeFragment : Fragment() {
         onFilterButtonClicked()
 
 
-        // 즐겨찾기 업데이트 안 됨 + 즐겨찾기 메시지 박스 표시
+        // 즐겨찾기 업데이트 + 즐겨찾기 메시지 박스 표시 + 검색 기능
     }
 
     private fun setupViews(view: View) {

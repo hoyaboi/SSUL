@@ -10,11 +10,11 @@ import android.widget.ArrayAdapter
 import android.widget.Spinner
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
-import com.example.ssul.viewmodel.DepartmentRegisterViewModel
+import com.example.ssul.viewmodel.DegreeViewModel
 
 class SelectDepartmentFragment : Fragment() {
 
-    private val viewModel: DepartmentRegisterViewModel by activityViewModels()
+    private val viewModel: DegreeViewModel by activityViewModels()
 
     private val departmentMap = mapOf(
         "IT대학" to listOf(

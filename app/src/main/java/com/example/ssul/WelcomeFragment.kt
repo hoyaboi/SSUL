@@ -10,11 +10,11 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import com.example.ssul.viewmodel.DepartmentRegisterViewModel
+import com.example.ssul.viewmodel.DegreeViewModel
 
 class WelcomeFragment : Fragment() {
 
-    private val viewModel: DepartmentRegisterViewModel by activityViewModels()
+    private val viewModel: DegreeViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
