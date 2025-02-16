@@ -17,7 +17,8 @@ class StoreAdapter(
     private var storeItems: MutableList<StoreModel>,
     private var favoriteItems: List<FavoriteModel>,
     private val onFavoriteClicked: (Int) -> Unit,
-    private val onStoreClicked: (Int) -> Unit
+    private val onStoreClicked: (Int) -> Unit,
+    private val isFavoriteMode: Boolean = false
 ) : RecyclerView.Adapter<StoreAdapter.StoreViewHolder>() {
 
     inner class StoreViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -100,13 +101,24 @@ class StoreAdapter(
 
     // 가게 리스트 업데이트
     fun updateItems(newItems: List<StoreModel>) {
-        storeItems = newItems.toMutableList()
+        storeItems = if (isFavoriteMode) { // FavoriteFragment
+            newItems.filter { store ->
+                favoriteItems.any { favorite -> favorite.storeId == store.id && favorite.isFavorite }
+            }.toMutableList()
+        } else { // HomeFragment
+            newItems.toMutableList()
+        }
         notifyDataSetChanged()
     }
 
     // 즐겨찾기 상태 업데이트
     fun updateFavorites(favorites: List<FavoriteModel>) {
         favoriteItems = favorites
+        if (isFavoriteMode) { // FavoriteFragment
+            storeItems = storeItems.filter { store ->
+                favoriteItems.any { favorite -> favorite.storeId == store.id && favorite.isFavorite }
+            }.toMutableList()
+        }
         notifyDataSetChanged()
     }
 }

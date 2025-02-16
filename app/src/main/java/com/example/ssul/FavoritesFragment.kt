@@ -272,6 +272,16 @@ class FavoritesFragment : Fragment() {
         setupViewModels()
         setupAdapters()
 
+        // 학과 정보 관찰 및 업데이트
+        degreeViewModel.selectedDepartment.observe(viewLifecycleOwner) { degree ->
+            degreeTextView.text = degree
+        }
+
+        // 학과 수정 버튼 클릭
+        setDegreeButton.setOnClickListener {
+            startActivity(Intent(requireContext(), StartActivity::class.java))
+        }
+
         // 가게 데이터 관찰 및 업데이트
         storeViewModel.storeItems.observe(viewLifecycleOwner) { items ->
             storeAdapter.updateItems(items)
@@ -322,7 +332,8 @@ class FavoritesFragment : Fragment() {
             },
             onStoreClicked = { storeId ->
                 moveToStoreActivity(storeId)
-            }
+            },
+            isFavoriteMode = true
         )
         storeList.adapter = storeAdapter
     }
