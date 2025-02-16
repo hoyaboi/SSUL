@@ -428,11 +428,10 @@ class HomeFragment : Fragment() {
             updateChipUI(partnerFilterChip, filters.partnerFilter)
             storeViewModel.applyFilters(filters)
         }
-
         onFilterButtonClicked()
 
-        // 필터 적용
-        // 즐겨찾기 업데이트 안 됨 + 즐겨찾기 메시지 박스 안 뜸
+
+        // 즐겨찾기 업데이트 + 즐겨찾기 메시지 박스 표시 + 검색 기능
     }
 
     private fun setupViews(view: View) {
@@ -492,8 +491,11 @@ class HomeFragment : Fragment() {
     }
 
     private fun moveToStoreActivity(storeId: Int) {
+        val selectedStore = storeViewModel.storeItems.value?.find { it.id == storeId }
+
         val intent = Intent(requireContext(), StoreActivity::class.java).apply {
             putExtra("storeId", storeId)
+            putExtra("storeImageUrl", selectedStore?.imageUrl ?: "")
         }
         startActivity(intent)
     }

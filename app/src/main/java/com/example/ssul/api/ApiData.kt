@@ -18,6 +18,7 @@ data class StoreInfoResponse(
     val isAssociated: Boolean,
     val address: String,
     val contact: String?,
+    val imageUrl: String,
     val associationInfo: AssociationInfo?,
     val menus: List<MenuResponse>
 ) {

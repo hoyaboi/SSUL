@@ -12,11 +12,16 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ssul.adapter.StoreAdapter
 import com.example.ssul.model.StoreModel
+import com.example.ssul.viewmodel.DegreeViewModel
+import com.example.ssul.viewmodel.FavoriteViewModel
+import com.example.ssul.viewmodel.FilterViewModel
+import com.example.ssul.viewmodel.StoreViewModel
 import kotlinx.coroutines.launch
 
 //class FavoritesFragment : Fragment() {
@@ -236,6 +241,21 @@ import kotlinx.coroutines.launch
 
 
 class FavoritesFragment : Fragment() {
+    // UI
+    private lateinit var degreeTextView: TextView
+    private lateinit var setDegreeButton: ImageView
+    private lateinit var storeAdapter: StoreAdapter
+    private lateinit var storeList: RecyclerView
+    private lateinit var groupFilterChip: TextView
+    private lateinit var dateFilterChip: TextView
+    private lateinit var efficiencyFilterChip: TextView
+    private lateinit var partnerFilterChip: TextView
+
+    // ViewModel
+    private lateinit var degreeViewModel: DegreeViewModel
+    private lateinit var storeViewModel: StoreViewModel
+    private lateinit var favoriteViewModel: FavoriteViewModel
+    private lateinit var filterViewModel: FilterViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -248,6 +268,110 @@ class FavoritesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupViews(view)
+        setupViewModels()
+        setupAdapters()
+
+        // 학과 정보 관찰 및 업데이트
+        degreeViewModel.selectedDepartment.observe(viewLifecycleOwner) { degree ->
+            degreeTextView.text = degree
+        }
+
+        // 학과 수정 버튼 클릭
+        setDegreeButton.setOnClickListener {
+            startActivity(Intent(requireContext(), StartActivity::class.java))
+        }
+
+        // 가게 데이터 관찰 및 업데이트
+        storeViewModel.storeItems.observe(viewLifecycleOwner) { items ->
+            storeAdapter.updateItems(items)
+        }
+
+        // 즐겨찾기 상태 관찰 및 업데이트
+        favoriteViewModel.favoriteState.observe(viewLifecycleOwner) { favorites ->
+            storeAdapter.updateFavorites(favorites)
+        }
+
+        // 필터 상태 관찰 및 UI 업데이트
+        filterViewModel.filters.observe(viewLifecycleOwner) { filters ->
+            updateChipUI(groupFilterChip, filters.groupFilter)
+            updateChipUI(dateFilterChip, filters.dateFilter)
+            updateChipUI(efficiencyFilterChip, filters.efficiencyFilter)
+            updateChipUI(partnerFilterChip, filters.partnerFilter)
+            storeViewModel.applyFilters(filters)
+        }
+        onFilterButtonClicked()
+
+        // 학과 클릭 로직 처리 + 즐겨찾기 가게 필터링 + 즐겨찾기 토글(아이템 삭제)
     }
 
+    private fun setupViews(view: View) {
+        degreeTextView = view.findViewById(R.id.degree_text)
+        setDegreeButton = view.findViewById(R.id.set_degree_button)
+        storeList = view.findViewById(R.id.store_list)
+        storeList.layoutManager = LinearLayoutManager(requireContext())
+        groupFilterChip = view.findViewById(R.id.filter_group_button)
+        dateFilterChip = view.findViewById(R.id.filter_date_button)
+        efficiencyFilterChip = view.findViewById(R.id.filter_efficiency_button)
+        partnerFilterChip = view.findViewById(R.id.filter_partner_button)
+    }
+
+    private fun setupViewModels() {
+        degreeViewModel = ViewModelProvider(this)[DegreeViewModel::class.java]
+        storeViewModel = ViewModelProvider(this)[StoreViewModel::class.java]
+        favoriteViewModel = ViewModelProvider(this)[FavoriteViewModel::class.java]
+        filterViewModel = ViewModelProvider(this)[FilterViewModel::class.java]
+    }
+
+    private fun setupAdapters() {
+        storeAdapter = StoreAdapter(
+            storeItems = storeViewModel.storeItems.value ?: mutableListOf(),
+            favoriteItems = favoriteViewModel.favoriteState.value ?: emptyList(),
+            onFavoriteClicked = { storeId ->
+                favoriteViewModel.toggleFavorite(storeId)
+            },
+            onStoreClicked = { storeId ->
+                moveToStoreActivity(storeId)
+            },
+            isFavoriteMode = true
+        )
+        storeList.adapter = storeAdapter
+    }
+
+    // 필터링 칩 UI 업데이트
+    private fun updateChipUI(chip: TextView, isSelected: Boolean) {
+        if (isSelected) {
+            chip.setBackgroundResource(R.drawable.filter_clicked)
+            chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+        } else {
+            chip.setBackgroundResource(R.drawable.filter_non_clicked)
+            chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
+        }
+    }
+
+    // 필터 버튼 클릭 시 ViewModel에 상태 전달
+    private fun onFilterButtonClicked() {
+        groupFilterChip.setOnClickListener {
+            filterViewModel.toggleFilter("group")
+        }
+        dateFilterChip.setOnClickListener {
+            filterViewModel.toggleFilter("date")
+        }
+        efficiencyFilterChip.setOnClickListener {
+            filterViewModel.toggleFilter("efficiency")
+        }
+        partnerFilterChip.setOnClickListener {
+            filterViewModel.toggleFilter("partner")
+        }
+    }
+
+    private fun moveToStoreActivity(storeId: Int) {
+        val selectedStore = storeViewModel.storeItems.value?.find { it.id == storeId }
+
+        val intent = Intent(requireContext(), StoreActivity::class.java).apply {
+            putExtra("storeId", storeId)
+            putExtra("storeImageUrl", selectedStore?.imageUrl ?: "")
+        }
+        startActivity(intent)
+    }
 }
