@@ -1,4 +1,4 @@
-package com.example.ssul.viewmodel
+package com.example.ssul.view.map
 
 import androidx.activity.ComponentActivity
 import com.naver.maps.geometry.LatLng
@@ -66,7 +66,7 @@ class RouteParser{
             polyline?.map = null
             polyline = PolylineOverlay().apply {
                 coords = polylineCoords
-                color = 0xFF0000FF.toInt() // 파란색
+                color = 0xFF7165E3.toInt()
                 width = 10 // 선의 두께
             }
             polyline?.map = naverMap

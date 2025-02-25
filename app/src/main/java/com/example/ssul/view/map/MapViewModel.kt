@@ -1,68 +1,97 @@
-package com.example.ssul.viewmodel
+package com.example.ssul.view.map
 
+import android.app.Application
 import android.content.Context
 import android.graphics.Color
 import android.location.Geocoder
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.lifecycleScope
+import android.widget.Toast
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ssul.R
 import com.example.ssul.StoreItem
 import com.example.ssul.model.CoordinateRepository
 import com.naver.maps.geometry.LatLng
+import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.OverlayImage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.Locale
 
-class MapViewModel : ViewModel()  {
+class MapViewModel(application: Application) : AndroidViewModel(application) {
     private val _repository = CoordinateRepository()
 
-    private val _activeFilters = MutableLiveData<MutableSet<Int>>().apply { value = mutableSetOf() }
-    val activeFilters: LiveData<MutableSet<Int>> get() = _activeFilters
+    private val storeList: MutableList<StoreItem> = mutableListOf()
 
-    private val _storeList = MutableLiveData<MutableList<StoreItem>>().apply { value = mutableListOf() }
-    val storeList: LiveData<MutableList<StoreItem>> get() = _storeList
+    private val filteredStoreList = MutableStateFlow<List<StoreItem>>(emptyList())
 
-    private val _markerList = MutableLiveData<MutableList<Marker>>().apply { value = mutableListOf() }
-    val markerList: LiveData<MutableList<Marker>> get() = _markerList
+    private val _filteredMarkers = MutableStateFlow<List<Marker>>(emptyList())
+    val filteredMarkers: StateFlow<List<Marker>> = _filteredMarkers.asStateFlow()
 
-    fun addMarker(marker: Marker){
-        val currentList = _markerList.value ?: mutableListOf()
-        currentList.add(marker)
-        _markerList.value = currentList
+    private val _selectedPopup = MutableStateFlow<StorePopUpView?>(null)
+    val selectedPopUp = _selectedPopup.asStateFlow()
+
+    private val _activeFilters = MutableStateFlow<MutableSet<Int>>(mutableSetOf())
+    val activeFilters = _activeFilters.asStateFlow()
+
+    private var selectedMarker: Marker? = null // 선택된 마커 저장
+
+    fun addStores(stores: MutableList<StoreItem>) {
+        storeList.addAll(stores)
+        basicSetup()
     }
 
-    fun clearMarkers(){
-        _markerList.value?.forEach { it.map = null }
-        _markerList.value?.clear()
+    fun basicSetup() {
+        val updatedFilteredStores = filteredStoreList.value.toMutableList()
+        updatedFilteredStores.addAll(storeList)
+        filteredStoreList.value = updatedFilteredStores
+        markerSetup()
     }
 
-    fun addStores(stores : List<StoreItem>){
-        val currentStores = _storeList.value ?: mutableListOf()
-        currentStores.addAll(stores)
-        _storeList.value = currentStores
-    }
-
-    fun toggleFilter(filterId: Int) {
-        val currentFilters = _activeFilters.value ?: mutableSetOf()
+    fun setFilter(filterId: Int) {
+        val currentFilters = _activeFilters.value.toMutableSet()
         if (currentFilters.contains(filterId)) {
-            currentFilters.remove(filterId) // 필터 비활성화
+            currentFilters.remove(filterId)
         } else {
-            currentFilters.add(filterId) // 필터 활성화
+            currentFilters.add(filterId)
         }
         _activeFilters.value = currentFilters
+        filteringStore()
     }
 
-    fun getFilteredStores(): List<StoreItem> { // 리턴 값이 있는 게 좋지 않음 별도로 필터리스트를 갖는 값을 만들고 그걸 View에서 사용하는게 나을듯
-        return storeList.value?.filter { store ->
-            _activeFilters.value?.all { filterId ->
+    fun searchFilter(query: String, naverMap: NaverMap) {
+        val filteredStores = storeList.filter {
+            it.name.contains(query, ignoreCase = true)
+        }
+        val context = getApplication<Application>().applicationContext
+        if (filteredStores.isNotEmpty()) {
+            filteredStoreList.value = filteredStores
+            markerSetup()
+            val targetStore = filteredStores.first()
+            val targetMarker = _filteredMarkers.value.find { it.captionText == targetStore.name }
+
+            targetMarker?.let { marker ->
+                handleMarkerClick(
+                    marker,
+                    targetStore,
+                    context
+                )
+                naverMap.moveCamera(CameraUpdate.scrollTo(marker.position))
+            }
+        } else {
+            Toast.makeText(context, "$query(은)는 존재하지 않는 술집입니다.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun filteringStore() {
+        val filtered = storeList.filter { store ->
+            _activeFilters.value.all { filterId ->
                 when (filterId) {
                     R.id.filter_group_button -> store.isFilterGroupChecked
                     R.id.filter_date_button -> store.isFilterDateChecked
@@ -70,11 +99,52 @@ class MapViewModel : ViewModel()  {
                     R.id.filter_partner_button -> store.isAssociated
                     else -> true
                 }
-            } ?: true
-        } ?: emptyList()
+            }
+        }
+        filteredStoreList.value = filtered // StateFlow로 필터링된 리스트 갱신
+        markerSetup()
     }
 
-    fun getCoordinatesFromAddress(context : Context, address : String) : LatLng? { // 마찬가지
+    private fun markerSetup() {
+        val context = getApplication<Application>().applicationContext
+        viewModelScope.launch(Dispatchers.IO) {
+            val newMarkers = mutableListOf<Marker>()
+
+            _filteredMarkers.value.forEach { marker ->
+                withContext(Dispatchers.Main) {
+                    marker.map = null
+                }
+            }
+
+            filteredStoreList.value.forEach { store ->
+                try {
+                    val coordinates = getCoordinatesFromAddress(context, store.address)
+                    if (coordinates != null) {
+                        val marker = Marker().apply {
+                            position = coordinates
+                            captionText = store.name
+                            icon = OverlayImage.fromResource(R.drawable.ic_store)
+                            captionColor = Color.rgb(0xAF, 0x8E, 0xFF)
+
+                            setOnClickListener {
+                                handleMarkerClick(this, store, context)
+                                true
+                            }
+                        }
+                        newMarkers.add(marker)
+                    }
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+            }
+
+            withContext(Dispatchers.Main) {
+                _filteredMarkers.value = newMarkers
+            }
+        }
+    }
+
+    private fun getCoordinatesFromAddress(context: Context, address: String): LatLng? {
         _repository.getCoordinate(address)?.let { return it }
 
         val geocoder = Geocoder(context, Locale.getDefault())
@@ -92,5 +162,47 @@ class MapViewModel : ViewModel()  {
             null
         }
     }
+
+    private fun handleMarkerClick(marker: Marker, store: StoreItem, context: Context) {
+        selectedMarker?.let {
+            it.icon = OverlayImage.fromResource(R.drawable.ic_store) // 기본 아이콘 복구
+        }
+
+        selectedMarker = marker
+        marker.icon = OverlayImage.fromResource(R.drawable.ic_store_selected) // 선택된 아이콘으로 변경
+
+        // 가게 정보 팝업 표시
+        setupStoreInfoPopup(marker, store, context)
+    }
+
+    private fun setupStoreInfoPopup(marker: Marker, store: StoreItem, context: Context) {
+        val popUpView = StorePopUpView(context, store)
+        popUpView.tag = store.id
+        popUpView.storeId = store.id
+        popUpView.imageUrl = store.imageUrl
+        popUpView.marker = marker
+        _selectedPopup.value = popUpView
+    }
+
+
+//    fun getLatLngFromAddressAsync(context: Context, address: String, callback: (Pair<Double, Double>?) -> Unit) {
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+//            val geocoder = Geocoder(context, Locale.getDefault())
+//            geocoder.getFromLocationName(address, 1, object : Geocoder.GeocodeListener {
+//                override fun onGeocode(addresses: MutableList<android.location.Address>) {
+//                    val result = addresses.firstOrNull()?.let {
+//                        Pair(it.latitude, it.longitude)
+//                    }
+//                    callback(result)
+//                }
+//
+//                override fun onError(errorMessage: String?) {
+//                    callback(null)
+//                }
+//            })
+//        } else {
+//            callback(getLatLngFromAddress(context, address))
+//        }
+//    }
+//    //api 33이상부터 사용 가능
 }
-//현재 min api가 24이고 getFromLocation의 바뀐건 33부터

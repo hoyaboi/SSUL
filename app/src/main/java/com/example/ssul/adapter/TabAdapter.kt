@@ -5,7 +5,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.example.ssul.FavoritesFragment
 import com.example.ssul.HomeFragment
-import com.example.ssul.MapFragment
+import com.example.ssul.view.map.MapFragment
 import com.example.ssul.StoreItem
 
 class TabAdapter(fragmentActivity: FragmentActivity, private val storeItems: MutableList<StoreItem>) :

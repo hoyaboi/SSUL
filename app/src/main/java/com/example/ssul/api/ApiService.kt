@@ -20,3 +20,4 @@ interface ApiService {
         @Query("major") degree: String
     ): Call<StoreInfoResponse>
 }
+
