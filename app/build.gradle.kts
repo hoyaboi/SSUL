@@ -71,18 +71,21 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    implementation("androidx.viewpager2:viewpager2:1.1.0")
+    implementation(libs.androidx.viewpager2)
 
-    implementation("com.naver.maps:map-sdk:3.19.1") // 네이버 지도 SDK
-    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation(libs.map.sdk) // 네이버 지도 SDK
+    implementation(libs.play.services.location)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest) // 최적 위치 정보 받아오는 것
-    implementation("com.github.bumptech.glide:glide:4.12.0")
-    annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")//스플래시 화면
+    implementation(libs.github.glide)
+    annotationProcessor(libs.compiler)//스플래시 화면
 
     // Retrofit
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+
+    //ViewmodelScope
+    implementation(libs.lifecycle.viewmodel.ktx)
 }
